@@ -1,3 +1,4 @@
+
 import type { Config } from "tailwindcss";
 
 export default {
@@ -61,6 +62,27 @@ export default {
 					'accent-foreground': 'hsl(var(--sidebar-accent-foreground))',
 					border: 'hsl(var(--sidebar-border))',
 					ring: 'hsl(var(--sidebar-ring))'
+				},
+				// Financial app specific colors
+				finance: {
+					green: '#0EA5E9',
+					teal: '#06B6D4',
+					blue: '#3B82F6',
+					purple: '#8B5CF6',
+					red: '#EF4444',
+					yellow: '#F59E0B',
+					orange: '#F97316',
+					gray: '#6B7280',
+				},
+				// Category colors
+				category: {
+					food: '#10B981',
+					shopping: '#6366F1', 
+					travel: '#F59E0B',
+					bills: '#EF4444',
+					entertainment: '#8B5CF6',
+					health: '#06B6D4',
+					other: '#6B7280',
 				}
 			},
 			borderRadius: {
@@ -84,11 +106,29 @@ export default {
 					to: {
 						height: '0'
 					}
-				}
+				},
+				'pulse-slow': {
+					'0%, 100%': {
+						opacity: '1',
+					},
+					'50%': {
+						opacity: '0.8',
+					},
+				},
+				'slide-in': {
+					'0%': {
+						transform: 'translateY(100%)',
+					},
+					'100%': {
+						transform: 'translateY(0)',
+					},
+				},
 			},
 			animation: {
 				'accordion-down': 'accordion-down 0.2s ease-out',
-				'accordion-up': 'accordion-up 0.2s ease-out'
+				'accordion-up': 'accordion-up 0.2s ease-out',
+				'pulse-slow': 'pulse-slow 3s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+				'slide-in': 'slide-in 0.3s ease-out',
 			}
 		}
 	},
