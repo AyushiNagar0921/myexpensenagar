@@ -5,7 +5,7 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
-import { useAppContext } from '@/contexts/AppContext';
+import { useAuth } from '@/contexts/AuthContext';
 
 interface SignupFormProps {
   onToggleForm: () => void;
@@ -16,9 +16,9 @@ const SignupForm: React.FC<SignupFormProps> = ({ onToggleForm }) => {
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-  const { setUser } = useAppContext();
+  const { signUp } = useAuth();
   
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
     if (!email || !password || !confirmPassword) {
@@ -38,14 +38,13 @@ const SignupForm: React.FC<SignupFormProps> = ({ onToggleForm }) => {
     
     setIsLoading(true);
     
-    // In a real app, this would be an API call to create a new user
-    setTimeout(() => {
-      // Demo signup - in real app, we would create a user in the database
-      const userId = Math.random().toString(36).substr(2, 9);
-      setUser({ id: userId, email });
-      toast.success('Account created successfully!');
+    try {
+      await signUp(email, password);
+    } catch (error) {
+      // Error handled in the auth context
+    } finally {
       setIsLoading(false);
-    }, 1000);
+    }
   };
   
   return (

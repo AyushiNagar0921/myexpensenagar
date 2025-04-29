@@ -1,16 +1,16 @@
 
 import React from 'react';
 import NavBar, { Sidebar } from './NavBar';
-import { useAppContext } from '@/contexts/AppContext';
+import { useAuth } from '@/contexts/AuthContext';
 
 interface LayoutProps {
   children: React.ReactNode;
 }
 
 const Layout: React.FC<LayoutProps> = ({ children }) => {
-  const { isAuthenticated } = useAppContext();
+  const { user } = useAuth();
   
-  if (!isAuthenticated) {
+  if (!user) {
     return <>{children}</>;
   }
   

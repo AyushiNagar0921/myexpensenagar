@@ -5,7 +5,7 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
-import { useAppContext } from '@/contexts/AppContext';
+import { useAuth } from '@/contexts/AuthContext';
 
 interface LoginFormProps {
   onToggleForm: () => void;
@@ -15,9 +15,9 @@ const LoginForm: React.FC<LoginFormProps> = ({ onToggleForm }) => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-  const { setUser } = useAppContext();
+  const { signIn } = useAuth();
   
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
     if (!email || !password) {
@@ -27,23 +27,13 @@ const LoginForm: React.FC<LoginFormProps> = ({ onToggleForm }) => {
     
     setIsLoading(true);
     
-    // In a real app, this would be an API call to authenticate the user
-    setTimeout(() => {
-      // Demo login - in real app, we would validate credentials against a database
-      if (email === 'demo@example.com' && password === 'password') {
-        setUser({ id: '1', email: 'demo@example.com' });
-        toast.success('Login successful!');
-      } else {
-        // For demo purposes, allow any email/password with basic validation
-        if (email.includes('@') && password.length >= 6) {
-          setUser({ id: Math.random().toString(36).substr(2, 9), email });
-          toast.success('Login successful!');
-        } else {
-          toast.error('Invalid email or password');
-        }
-      }
+    try {
+      await signIn(email, password);
+    } catch (error) {
+      // Error handled in the auth context
+    } finally {
       setIsLoading(false);
-    }, 1000);
+    }
   };
   
   return (

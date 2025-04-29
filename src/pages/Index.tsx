@@ -1,20 +1,22 @@
 
 import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { useAppContext } from '@/contexts/AppContext';
+import { useAuth } from '@/contexts/AuthContext';
 
 const Index = () => {
   const navigate = useNavigate();
-  const { isAuthenticated } = useAppContext();
+  const { user, loading } = useAuth();
   
   useEffect(() => {
-    // Redirect to home page if authenticated, otherwise to auth page
-    if (isAuthenticated) {
-      navigate('/', { replace: true });
-    } else {
-      navigate('/auth', { replace: true });
+    if (!loading) {
+      // Redirect to home page if authenticated, otherwise to auth page
+      if (user) {
+        navigate('/', { replace: true });
+      } else {
+        navigate('/auth', { replace: true });
+      }
     }
-  }, [navigate, isAuthenticated]);
+  }, [navigate, user, loading]);
   
   return (
     <div className="flex items-center justify-center min-h-screen">
