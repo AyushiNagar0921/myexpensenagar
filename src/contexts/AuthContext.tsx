@@ -9,7 +9,7 @@ interface AuthContextType {
   user: User | null;
   loading: boolean;
   signIn: (email: string, password: string) => Promise<void>;
-  signUp: (email: string, password: string) => Promise<void>;
+  signUp: (email: string, password: string, username?: string, avatarUrl?: string) => Promise<void>;
   signOut: () => Promise<void>;
 }
 
@@ -59,15 +59,31 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   // Sign up with email and password
-  const signUp = async (email: string, password: string) => {
+  const signUp = async (email: string, password: string, username?: string, avatarUrl?: string) => {
     try {
-      const { error } = await supabase.auth.signUp({
+      const { data, error } = await supabase.auth.signUp({
         email,
         password,
       });
 
       if (error) {
         throw error;
+      }
+
+      // After successful signup, update the profile if username or avatarUrl is provided
+      if (data.user && (username || avatarUrl)) {
+        const { error: profileError } = await supabase
+          .from('profiles')
+          .update({
+            username,
+            avatar_url: avatarUrl,
+          })
+          .eq('id', data.user.id);
+        
+        if (profileError) {
+          console.error('Error updating profile:', profileError);
+          toast.error('Account created but profile could not be updated');
+        }
       }
 
       toast.success("Signed up successfully!");

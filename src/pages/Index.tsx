@@ -11,9 +11,9 @@ const Index = () => {
     if (!loading) {
       // Redirect to home page if authenticated, otherwise to auth page
       if (user) {
-        navigate('/', { replace: true });
+        navigate('/');
       } else {
-        navigate('/auth', { replace: true });
+        navigate('/auth');
       }
     }
   }, [navigate, user, loading]);
