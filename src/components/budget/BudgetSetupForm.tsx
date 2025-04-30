@@ -7,8 +7,6 @@ import { Label } from "@/components/ui/label";
 import { Slider } from "@/components/ui/slider";
 import { ExpenseCategory, useAppContext } from '@/contexts/AppContext';
 import { toast } from "sonner";
-import { supabase } from '@/integrations/supabase/client';
-import { useAuth } from '@/contexts/AuthContext';
 
 interface BudgetItem {
   category: ExpenseCategory;
@@ -73,8 +71,7 @@ const getCategoryColor = (category: ExpenseCategory): string => {
 };
 
 const BudgetSetupForm: React.FC<BudgetSetupProps> = ({ onComplete }) => {
-  const { income } = useAppContext();
-  const { user } = useAuth();
+  const { income, saveBudgetCategories } = useAppContext();
   const [totalBudget, setTotalBudget] = useState(income?.amount || 0);
   const [budgetItems, setBudgetItems] = useState<BudgetItem[]>(() => {
     // Calculate initial amounts based on percentages
@@ -154,11 +151,6 @@ const BudgetSetupForm: React.FC<BudgetSetupProps> = ({ onComplete }) => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!user?.id) {
-      toast.error('User not authenticated');
-      return;
-    }
-    
     if (Math.abs(totalPercentageAllocated - 100) > 0.5) {
       toast.error('Total percentage allocation should be 100%');
       return;
@@ -167,19 +159,12 @@ const BudgetSetupForm: React.FC<BudgetSetupProps> = ({ onComplete }) => {
     setIsSubmitting(true);
     
     try {
-      // Save budget settings to Supabase
-      for (const item of budgetItems) {
-        const { error } = await supabase.from('budget_categories').upsert({
-          user_id: user.id,
-          category: item.category,
-          amount: item.amount,
-          percentage: item.percentage
-        }, {
-          onConflict: 'user_id,category'
-        });
-        
-        if (error) throw error;
-      }
+      // Save budget categories to Supabase
+      await saveBudgetCategories(budgetItems.map(item => ({
+        category: item.category,
+        amount: item.amount,
+        percentage: item.percentage
+      })));
       
       toast.success('Budget has been set up successfully');
       onComplete();

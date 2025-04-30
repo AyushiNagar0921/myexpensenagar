@@ -58,12 +58,12 @@ const TransactionsTable = () => {
     amount: income.amount,
     description: income.description || 'Monthly Income',
     date: income.date,
-    type: 'income'
+    type: 'income' as const
   }] : [];
   
   const allExpenses = expenses.map(expense => ({
     ...expense,
-    type: 'expense'
+    type: 'expense' as const
   }));
   
   const allTransactions = [...allIncome, ...allExpenses];
@@ -266,7 +266,7 @@ const TransactionsTable = () => {
                     </td>
                     <td className="py-3 px-4">
                       {transaction.type === 'expense' && 'category' in transaction ? (
-                        <span className={`category-badge ${getCategoryColorClass(transaction.category)}`}>
+                        <span className={`inline-block px-2 py-1 rounded-full text-xs ${getCategoryColorClass(transaction.category)}`}>
                           {transaction.category.charAt(0).toUpperCase() + transaction.category.slice(1)}
                         </span>
                       ) : (

@@ -17,7 +17,8 @@ export type ExpenseCategory =
 export interface User {
   id: string;
   email: string;
-  name?: string;
+  username?: string;
+  avatarUrl?: string;
 }
 
 export interface Income {
@@ -53,6 +54,13 @@ export interface Loan {
   nextPaymentDate: Date;
 }
 
+export interface BudgetCategory {
+  id: string;
+  category: ExpenseCategory;
+  amount: number;
+  percentage: number;
+}
+
 interface AppContextType {
   user: User | null;
   isAuthenticated: boolean;
@@ -60,9 +68,11 @@ interface AppContextType {
   expenses: Expense[];
   savingGoals: SavingGoal[];
   loans: Loan[];
+  budgetCategories: BudgetCategory[];
   remainingBalance: number;
   setUser: (user: User | null) => void;
   setIncome: (income: Income) => void;
+  addIncome: (income: Omit<Income, 'id'>) => Promise<void>;
   addExpense: (expense: Omit<Expense, 'id'>) => Promise<void>;
   addSavingGoal: (goal: Omit<SavingGoal, 'id'>) => Promise<void>;
   addLoan: (loan: Omit<Loan, 'id'>) => Promise<void>;
@@ -71,6 +81,8 @@ interface AppContextType {
   deleteExpense: (id: string) => Promise<void>;
   deleteSavingGoal: (id: string) => Promise<void>;
   deleteLoan: (id: string) => Promise<void>;
+  saveBudgetCategories: (categories: Omit<BudgetCategory, 'id'>[]) => Promise<void>;
+  fetchBudgetCategories: () => Promise<void>;
   logout: () => void;
   fetchUserData: () => Promise<void>;
   isLoading: boolean;
@@ -86,6 +98,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   const [expenses, setExpenses] = useState<Expense[]>([]);
   const [savingGoals, setSavingGoals] = useState<SavingGoal[]>([]);
   const [loans, setLoans] = useState<Loan[]>([]);
+  const [budgetCategories, setBudgetCategories] = useState<BudgetCategory[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(false);
   
   // Format date for database storage
@@ -98,6 +111,70 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     return new Date(dateStr);
   };
 
+  // Fetch budget categories
+  const fetchBudgetCategories = async () => {
+    if (!authUser?.id) return;
+    
+    try {
+      const { data, error } = await supabase
+        .from('budget_categories')
+        .select('*')
+        .eq('user_id', authUser.id);
+        
+      if (error) throw error;
+      
+      if (data) {
+        setBudgetCategories(
+          data.map(category => ({
+            id: category.id,
+            category: category.category as ExpenseCategory,
+            amount: category.amount,
+            percentage: category.percentage
+          }))
+        );
+      }
+    } catch (error) {
+      console.error('Error fetching budget categories:', error);
+      toast.error('Failed to fetch budget data');
+    }
+  };
+
+  // Save budget categories
+  const saveBudgetCategories = async (categories: Omit<BudgetCategory, 'id'>[]) => {
+    if (!authUser?.id) return;
+    
+    try {
+      // First delete existing categories
+      const { error: deleteError } = await supabase
+        .from('budget_categories')
+        .delete()
+        .eq('user_id', authUser.id);
+        
+      if (deleteError) throw deleteError;
+      
+      // Then insert new ones
+      for (const category of categories) {
+        const { error } = await supabase
+          .from('budget_categories')
+          .insert({
+            user_id: authUser.id,
+            category: category.category,
+            amount: category.amount,
+            percentage: category.percentage
+          });
+          
+        if (error) throw error;
+      }
+      
+      // Fetch updated categories
+      await fetchBudgetCategories();
+      toast.success('Budget settings saved successfully');
+    } catch (error) {
+      console.error('Error saving budget categories:', error);
+      toast.error('Failed to save budget settings');
+    }
+  };
+  
   // Fetch all user data from Supabase
   const fetchUserData = async () => {
     if (!authUser?.id) return;
@@ -191,6 +268,9 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
           }))
         );
       }
+
+      // Fetch budget categories
+      await fetchBudgetCategories();
     } catch (error) {
       console.error('Error fetching user data:', error);
       toast.error('Failed to fetch user data');
@@ -240,6 +320,45 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     } catch (error: any) {
       console.error('Error setting income:', error);
       toast.error(error.message || 'Failed to update income');
+    }
+  };
+
+  // Add new income source
+  const addIncome = async (incomeData: Omit<Income, 'id'>) => {
+    if (!authUser?.id) return;
+    
+    try {
+      const { data, error } = await supabase
+        .from('income')
+        .insert({
+          user_id: authUser.id,
+          amount: incomeData.amount,
+          date: formatDateForDB(incomeData.date),
+          description: incomeData.description || null
+        })
+        .select()
+        .single();
+        
+      if (error) throw error;
+      
+      const newIncome = {
+        id: data.id,
+        amount: data.amount,
+        date: parseDate(data.date),
+        description: data.description || undefined
+      };
+      
+      // Update the main income if this is the first one
+      if (!income) {
+        setIncomeState(newIncome);
+      }
+      
+      toast.success("Income added successfully");
+      return newIncome;
+    } catch (error: any) {
+      console.error('Error adding income:', error);
+      toast.error(error.message || 'Failed to add income');
+      throw error;
     }
   };
   
@@ -511,6 +630,8 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       setUser({
         id: authUser.id,
         email: authUser.email || '',
+        username: authUser.user_metadata?.username,
+        avatarUrl: authUser.user_metadata?.avatar_url
       });
       
       fetchUserData();
@@ -520,6 +641,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       setExpenses([]);
       setSavingGoals([]);
       setLoans([]);
+      setBudgetCategories([]);
     }
   }, [authUser?.id]);
   
@@ -536,9 +658,11 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       expenses,
       savingGoals,
       loans,
+      budgetCategories,
       remainingBalance,
       setUser,
       setIncome,
+      addIncome,
       addExpense,
       addSavingGoal,
       addLoan,
@@ -547,6 +671,8 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       deleteExpense,
       deleteSavingGoal,
       deleteLoan,
+      saveBudgetCategories,
+      fetchBudgetCategories,
       logout,
       fetchUserData,
       isLoading

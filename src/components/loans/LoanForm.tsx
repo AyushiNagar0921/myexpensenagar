@@ -7,7 +7,7 @@ import { Label } from "@/components/ui/label";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { format } from "date-fns";
-import { Calendar as CalendarIcon } from "lucide-react";
+import { CalendarIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAppContext } from '@/contexts/AppContext';
 import { toast } from "sonner";
@@ -21,6 +21,7 @@ const LoanForm = ({ onClose }: { onClose: () => void }) => {
   const [dueDay, setDueDay] = useState('');
   const [nextPaymentDate, setNextPaymentDate] = useState<Date>(new Date());
   const [isLoading, setIsLoading] = useState(false);
+  const [isCalendarOpen, setIsCalendarOpen] = useState(false);
   
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -181,7 +182,7 @@ const LoanForm = ({ onClose }: { onClose: () => void }) => {
           
           <div className="space-y-2">
             <Label>Next Payment Date</Label>
-            <Popover>
+            <Popover open={isCalendarOpen} onOpenChange={setIsCalendarOpen}>
               <PopoverTrigger asChild>
                 <Button
                   variant="outline"
@@ -195,9 +196,14 @@ const LoanForm = ({ onClose }: { onClose: () => void }) => {
                 <Calendar
                   mode="single"
                   selected={nextPaymentDate}
-                  onSelect={(date) => date && setNextPaymentDate(date)}
+                  onSelect={(date) => {
+                    if (date) {
+                      setNextPaymentDate(date);
+                      setIsCalendarOpen(false);
+                    }
+                  }}
                   initialFocus
-                  className={cn("p-3 pointer-events-auto")}
+                  className="p-3 pointer-events-auto"
                 />
               </PopoverContent>
             </Popover>

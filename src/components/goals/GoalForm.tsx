@@ -7,7 +7,7 @@ import { Label } from "@/components/ui/label";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { format } from "date-fns";
-import { Calendar as CalendarIcon } from "lucide-react";
+import { CalendarIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAppContext } from '@/contexts/AppContext';
 import { toast } from "sonner";
@@ -19,6 +19,7 @@ const GoalForm = ({ onClose }: { onClose: () => void }) => {
   const [currentAmount, setCurrentAmount] = useState('');
   const [deadline, setDeadline] = useState<Date | undefined>(undefined);
   const [isLoading, setIsLoading] = useState(false);
+  const [isCalendarOpen, setIsCalendarOpen] = useState(false);
   
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -121,7 +122,7 @@ const GoalForm = ({ onClose }: { onClose: () => void }) => {
           
           <div className="space-y-2">
             <Label>Target Date (Optional)</Label>
-            <Popover>
+            <Popover open={isCalendarOpen} onOpenChange={setIsCalendarOpen}>
               <PopoverTrigger asChild>
                 <Button
                   variant="outline"
@@ -135,10 +136,13 @@ const GoalForm = ({ onClose }: { onClose: () => void }) => {
                 <Calendar
                   mode="single"
                   selected={deadline}
-                  onSelect={setDeadline}
+                  onSelect={(date) => {
+                    setDeadline(date);
+                    setIsCalendarOpen(false);
+                  }}
                   disabled={(date) => date < new Date()}
                   initialFocus
-                  className={cn("p-3 pointer-events-auto")}
+                  className="p-3 pointer-events-auto"
                 />
               </PopoverContent>
             </Popover>

@@ -8,7 +8,6 @@ import { useAppContext } from '@/contexts/AppContext';
 import IncomeSetupForm from '@/components/auth/IncomeSetupForm';
 import { Skeleton } from "@/components/ui/skeleton";
 import BudgetSetupForm from '@/components/budget/BudgetSetupForm';
-import { supabase } from '@/integrations/supabase/client';
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
@@ -17,40 +16,34 @@ import { IndianRupee } from 'lucide-react';
 import { format } from 'date-fns';
 
 const Home = () => {
-  const { income, isLoading, user, loans } = useAppContext();
+  const { income, isLoading, user, loans, budgetCategories, expenses, fetchBudgetCategories } = useAppContext();
   const [showBudgetSetup, setShowBudgetSetup] = useState(false);
-  const [budgetData, setBudgetData] = useState<any[]>([]);
   const [isBudgetLoading, setIsBudgetLoading] = useState(true);
   
-  // Fetch budget data
+  // Check budget data
   useEffect(() => {
-    const fetchBudgetData = async () => {
+    const checkBudget = async () => {
       if (!user?.id) return;
       
+      setIsBudgetLoading(true);
       try {
-        const { data, error } = await supabase
-          .from('budget_categories')
-          .select('*')
-          .eq('user_id', user.id);
-          
-        if (error) throw error;
+        await fetchBudgetCategories();
         
-        if (data && data.length > 0) {
-          setBudgetData(data);
-        } else {
+        // Check if budget data exists
+        if (budgetCategories.length === 0) {
           // Show budget setup if no budget data exists
           setShowBudgetSetup(true);
         }
       } catch (error) {
-        console.error('Error fetching budget data:', error);
-        toast.error('Failed to fetch budget data');
+        console.error('Error checking budget data:', error);
+        toast.error('Failed to check budget data');
       } finally {
         setIsBudgetLoading(false);
       }
     };
     
     if (income && user?.id) {
-      fetchBudgetData();
+      checkBudget();
     }
   }, [user?.id, income]);
   
@@ -99,7 +92,7 @@ const Home = () => {
   return (
     <>
       <Dialog open={showBudgetSetup} onOpenChange={setShowBudgetSetup}>
-        <DialogContent className="sm:max-w-[600px]" showClose={false}>
+        <DialogContent className="sm:max-w-[600px]">
           <BudgetSetupForm onComplete={() => setShowBudgetSetup(false)} />
         </DialogContent>
       </Dialog>
@@ -159,7 +152,7 @@ const Home = () => {
         )}
         
         {/* Budget Status */}
-        {!isBudgetLoading && budgetData.length > 0 && (
+        {!isBudgetLoading && budgetCategories.length > 0 && (
           <div className="grid gap-6">
             <Card className="shadow-md">
               <CardHeader className="pb-2">
@@ -167,10 +160,17 @@ const Home = () => {
               </CardHeader>
               <CardContent className="pt-2">
                 <div className="space-y-4">
-                  {budgetData.map((budget) => {
+                  {budgetCategories.map((budget) => {
                     // Calculate expenses in this category
+                    const categoryExpenses = expenses
+                      .filter(exp => exp.category === budget.category)
+                      .reduce((sum, exp) => sum + exp.amount, 0);
+                    
+                    const percentage = (categoryExpenses / budget.amount) * 100;
+                    const isOverBudget = percentage > 100;
+                    
                     return (
-                      <div key={budget.category} className="space-y-1">
+                      <div key={budget.id} className="space-y-1">
                         <div className="flex items-center justify-between">
                           <div className="flex items-center gap-2">
                             <div className={`w-3 h-3 rounded-full bg-category-${budget.category}`}></div>
@@ -179,11 +179,17 @@ const Home = () => {
                           <div className="text-right">
                             <div className="flex items-center">
                               <IndianRupee className="h-3 w-3 mr-0.5" />
-                              <span className="font-medium">{formatCurrency(budget.amount)}</span>
+                              <span className={`font-medium ${isOverBudget ? 'text-red-600' : ''}`}>
+                                {formatCurrency(categoryExpenses)} / {formatCurrency(budget.amount)}
+                              </span>
                             </div>
                           </div>
                         </div>
-                        <Progress value={(0 / budget.amount) * 100} className="h-2" />
+                        <Progress 
+                          value={Math.min(percentage, 100)} 
+                          className={`h-2 ${isOverBudget ? 'bg-red-300' : ''}`}
+                          indicatorClassName={isOverBudget ? 'bg-red-600' : ''}
+                        />
                       </div>
                     );
                   })}

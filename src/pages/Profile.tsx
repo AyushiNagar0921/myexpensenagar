@@ -10,10 +10,10 @@ import { useAppContext } from '@/contexts/AppContext';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { Skeleton } from "@/components/ui/skeleton";
-import { Indian as IndianRupee } from "lucide-react";
+import { IndianRupee } from "lucide-react";
 
 const Profile = () => {
-  const { user, updateProfile } = useAuth();
+  const { user: authUser, updateUserProfile } = useAuth();
   const { income, expenses, loans, savingGoals, isLoading } = useAppContext();
   
   const [username, setUsername] = useState('');
@@ -22,20 +22,20 @@ const Profile = () => {
   const [uploading, setUploading] = useState(false);
   
   useEffect(() => {
-    if (user?.username) {
-      setUsername(user.username);
+    if (authUser?.user_metadata?.username) {
+      setUsername(authUser.user_metadata.username);
     }
-    if (user?.avatarUrl) {
-      setAvatarUrl(user.avatarUrl);
+    if (authUser?.user_metadata?.avatar_url) {
+      setAvatarUrl(authUser.user_metadata.avatar_url);
     }
-  }, [user]);
+  }, [authUser]);
   
   const handleUpdateProfile = async () => {
-    if (!user) return;
+    if (!authUser) return;
     
     setIsUpdating(true);
     try {
-      await updateProfile({
+      await updateUserProfile({
         username,
         avatar_url: avatarUrl
       });
@@ -49,13 +49,13 @@ const Profile = () => {
   };
   
   const handleAvatarUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
-    if (!user?.id || !event.target.files || event.target.files.length === 0) {
+    if (!authUser?.id || !event.target.files || event.target.files.length === 0) {
       return;
     }
     
     const file = event.target.files[0];
     const fileExt = file.name.split('.').pop();
-    const filePath = `avatars/${user.id}-${Math.random().toString(36).slice(2)}.${fileExt}`;
+    const filePath = `avatars/${authUser.id}-${Math.random().toString(36).slice(2)}.${fileExt}`;
     
     setUploading(true);
     
@@ -131,10 +131,10 @@ const Profile = () => {
             <div className="flex flex-col items-center space-y-4 sm:flex-row sm:space-y-0 sm:space-x-4">
               <Avatar className="h-24 w-24">
                 {avatarUrl ? (
-                  <AvatarImage src={avatarUrl} alt={username || user?.email || 'User'} />
+                  <AvatarImage src={avatarUrl} alt={username || authUser?.email || 'User'} />
                 ) : (
                   <AvatarFallback className="text-lg">
-                    {username ? username[0].toUpperCase() : user?.email?.[0].toUpperCase() || 'U'}
+                    {username ? username[0].toUpperCase() : authUser?.email?.[0].toUpperCase() || 'U'}
                   </AvatarFallback>
                 )}
               </Avatar>
@@ -157,7 +157,7 @@ const Profile = () => {
               <Label htmlFor="email">Email</Label>
               <Input
                 id="email"
-                value={user?.email || ''}
+                value={authUser?.email || ''}
                 disabled
               />
             </div>
