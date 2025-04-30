@@ -11,7 +11,6 @@ import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { format } from "date-fns";
 import { Calendar as CalendarIcon } from "lucide-react";
-import { cn } from "@/lib/utils";
 import { useAppContext, ExpenseCategory } from '@/contexts/AppContext';
 import { toast } from "sonner";
 
@@ -34,7 +33,7 @@ const ExpenseForm = () => {
   const [date, setDate] = useState<Date>(new Date());
   const [isLoading, setIsLoading] = useState(false);
   
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
     if (!amount || parseFloat(amount) <= 0) {
@@ -56,7 +55,7 @@ const ExpenseForm = () => {
     
     try {
       // Add the new expense
-      addExpense({
+      await addExpense({
         amount: parseFloat(amount),
         category,
         description,
@@ -71,8 +70,7 @@ const ExpenseForm = () => {
       
       navigate('/');
     } catch (error) {
-      toast.error('Failed to add expense');
-      console.error(error);
+      console.error('Failed to add expense:', error);
     } finally {
       setIsLoading(false);
     }

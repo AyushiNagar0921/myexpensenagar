@@ -6,10 +6,26 @@ import { Plus } from "lucide-react";
 import { useAppContext } from '@/contexts/AppContext';
 import GoalCard from '@/components/goals/GoalCard';
 import GoalForm from '@/components/goals/GoalForm';
+import { Skeleton } from "@/components/ui/skeleton";
 
 const SavingGoals = () => {
-  const { savingGoals, deleteSavingGoal } = useAppContext();
+  const { savingGoals, deleteSavingGoal, isLoading } = useAppContext();
   const [isAddingGoal, setIsAddingGoal] = useState(false);
+  
+  if (isLoading) {
+    return (
+      <div className="space-y-6">
+        <div className="flex items-center justify-between">
+          <h2 className="text-3xl font-bold tracking-tight">Saving Goals</h2>
+        </div>
+        <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+          {[1, 2, 3].map((i) => (
+            <Skeleton key={i} className="h-[200px] w-full" />
+          ))}
+        </div>
+      </div>
+    );
+  }
   
   return (
     <div className="space-y-6">

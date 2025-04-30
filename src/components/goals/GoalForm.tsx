@@ -20,7 +20,7 @@ const GoalForm = ({ onClose }: { onClose: () => void }) => {
   const [deadline, setDeadline] = useState<Date | undefined>(undefined);
   const [isLoading, setIsLoading] = useState(false);
   
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
     if (!title) {
@@ -45,7 +45,7 @@ const GoalForm = ({ onClose }: { onClose: () => void }) => {
     
     try {
       // Add the new saving goal
-      addSavingGoal({
+      await addSavingGoal({
         title,
         targetAmount: target,
         currentAmount: current,
@@ -59,8 +59,7 @@ const GoalForm = ({ onClose }: { onClose: () => void }) => {
       setDeadline(undefined);
       onClose();
     } catch (error) {
-      toast.error('Failed to add saving goal');
-      console.error(error);
+      console.error('Failed to add saving goal:', error);
     } finally {
       setIsLoading(false);
     }

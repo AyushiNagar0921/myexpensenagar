@@ -12,13 +12,14 @@ import { toast } from "sonner";
 
 interface LoanCardProps {
   loan: Loan;
-  onDelete: (id: string) => void;
+  onDelete: (id: string) => Promise<void>;
 }
 
 const LoanCard: React.FC<LoanCardProps> = ({ loan, onDelete }) => {
   const { updateLoanPayment } = useAppContext();
   const [isPaymentOpen, setIsPaymentOpen] = useState(false);
   const [paymentAmount, setPaymentAmount] = useState(loan.monthlyPayment.toString());
+  const [isLoading, setIsLoading] = useState(false);
   
   // Calculate paid percentage
   const paidAmount = loan.totalAmount - loan.remainingAmount;
@@ -39,7 +40,7 @@ const LoanCard: React.FC<LoanCardProps> = ({ loan, onDelete }) => {
   const monthsRemaining = Math.ceil(loan.remainingAmount / loan.monthlyPayment);
   
   // Handle payment submission
-  const handlePayment = () => {
+  const handlePayment = async () => {
     const amount = parseFloat(paymentAmount);
     
     if (isNaN(amount) || amount <= 0) {
@@ -47,9 +48,28 @@ const LoanCard: React.FC<LoanCardProps> = ({ loan, onDelete }) => {
       return;
     }
     
-    updateLoanPayment(loan.id, amount);
-    setPaymentAmount(loan.monthlyPayment.toString());
-    setIsPaymentOpen(false);
+    setIsLoading(true);
+    
+    try {
+      await updateLoanPayment(loan.id, amount);
+      setPaymentAmount(loan.monthlyPayment.toString());
+      setIsPaymentOpen(false);
+    } catch (error) {
+      console.error('Error making loan payment:', error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+  
+  const handleDelete = async () => {
+    setIsLoading(true);
+    try {
+      await onDelete(loan.id);
+    } catch (error) {
+      console.error('Error deleting loan:', error);
+    } finally {
+      setIsLoading(false);
+    }
   };
   
   return (
@@ -108,7 +128,7 @@ const LoanCard: React.FC<LoanCardProps> = ({ loan, onDelete }) => {
       <CardFooter className="pt-2 pb-4 flex gap-2">
         <Dialog open={isPaymentOpen} onOpenChange={setIsPaymentOpen}>
           <DialogTrigger asChild>
-            <Button variant="outline" className="flex-1" disabled={isPaidOff}>
+            <Button variant="outline" className="flex-1" disabled={isPaidOff || isLoading}>
               {isPaidOff ? 'Paid Off' : 'Make Payment'}
             </Button>
           </DialogTrigger>
@@ -145,6 +165,7 @@ const LoanCard: React.FC<LoanCardProps> = ({ loan, onDelete }) => {
                   variant="outline" 
                   className="flex-1"
                   onClick={() => setIsPaymentOpen(false)}
+                  disabled={isLoading}
                 >
                   Cancel
                 </Button>
@@ -152,8 +173,9 @@ const LoanCard: React.FC<LoanCardProps> = ({ loan, onDelete }) => {
                   type="button" 
                   className="flex-1"
                   onClick={handlePayment}
+                  disabled={isLoading}
                 >
-                  Make Payment
+                  {isLoading ? 'Processing...' : 'Make Payment'}
                 </Button>
               </div>
             </div>
@@ -163,9 +185,10 @@ const LoanCard: React.FC<LoanCardProps> = ({ loan, onDelete }) => {
         <Button 
           variant="ghost" 
           className="flex-1"
-          onClick={() => onDelete(loan.id)}
+          onClick={handleDelete}
+          disabled={isLoading}
         >
-          Delete
+          {isLoading ? 'Deleting...' : 'Delete'}
         </Button>
       </CardFooter>
     </Card>

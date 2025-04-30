@@ -5,48 +5,48 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { toast } from "sonner";
 import { useAppContext } from '@/contexts/AppContext';
 
-const IncomeSetupForm: React.FC = () => {
-  const [amount, setAmount] = useState('');
-  const [description, setDescription] = useState('Monthly Income');
-  const [isLoading, setIsLoading] = useState(false);
+const IncomeSetupForm = () => {
   const { setIncome } = useAppContext();
+  const [amount, setAmount] = useState('');
+  const [description, setDescription] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
   
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
     if (!amount || parseFloat(amount) <= 0) {
-      toast.error('Please enter a valid income amount');
       return;
     }
     
     setIsLoading(true);
     
-    // Set the user's income
-    setTimeout(() => {
-      setIncome({
+    try {
+      await setIncome({
+        id: '', // New income will get ID from Supabase
         amount: parseFloat(amount),
         date: new Date(),
-        description: description || 'Monthly Income'
+        description: description || undefined
       });
-      toast.success('Income setup completed!');
+    } catch (error) {
+      console.error('Error setting income:', error);
+    } finally {
       setIsLoading(false);
-    }, 500);
+    }
   };
   
   return (
-    <div className="flex items-center justify-center min-h-[calc(100vh-8rem)]">
-      <Card className="w-full max-w-md mx-auto shadow-lg">
-        <CardHeader className="space-y-1">
-          <CardTitle className="text-2xl font-bold text-center">Set Up Your Income</CardTitle>
-          <CardDescription className="text-center">
-            To get started, please enter your monthly income
+    <div className="container max-w-md mx-auto py-8">
+      <Card>
+        <CardHeader className="space-y-1 text-center">
+          <CardTitle className="text-2xl font-bold">Welcome!</CardTitle>
+          <CardDescription>
+            Please set up your monthly income to get started
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <form onSubmit={handleSubmit} className="space-y-6">
+          <form onSubmit={handleSubmit} className="space-y-4">
             <div className="space-y-2">
               <Label htmlFor="amount">Monthly Income</Label>
               <div className="relative">
@@ -64,19 +64,25 @@ const IncomeSetupForm: React.FC = () => {
                 />
               </div>
             </div>
+            
             <div className="space-y-2">
               <Label htmlFor="description">Description (Optional)</Label>
               <Textarea
                 id="description"
-                placeholder="Monthly Salary"
+                placeholder="e.g., Monthly salary, Freelance income, etc."
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
                 className="resize-none"
-                rows={2}
+                rows={3}
               />
             </div>
-            <Button type="submit" className="w-full" disabled={isLoading}>
-              {isLoading ? 'Setting up...' : 'Continue'}
+            
+            <Button 
+              type="submit" 
+              className="w-full" 
+              disabled={isLoading || !amount || parseFloat(amount) <= 0}
+            >
+              {isLoading ? 'Saving...' : 'Continue'}
             </Button>
           </form>
         </CardContent>

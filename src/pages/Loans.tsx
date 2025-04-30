@@ -6,10 +6,26 @@ import { Plus } from "lucide-react";
 import { useAppContext } from '@/contexts/AppContext';
 import LoanCard from '@/components/loans/LoanCard';
 import LoanForm from '@/components/loans/LoanForm';
+import { Skeleton } from "@/components/ui/skeleton";
 
 const Loans = () => {
-  const { loans, deleteLoan } = useAppContext();
+  const { loans, deleteLoan, isLoading } = useAppContext();
   const [isAddingLoan, setIsAddingLoan] = useState(false);
+  
+  if (isLoading) {
+    return (
+      <div className="space-y-6">
+        <div className="flex items-center justify-between">
+          <h2 className="text-3xl font-bold tracking-tight">Loans & EMIs</h2>
+        </div>
+        <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+          {[1, 2, 3].map((i) => (
+            <Skeleton key={i} className="h-[200px] w-full" />
+          ))}
+        </div>
+      </div>
+    );
+  }
   
   return (
     <div className="space-y-6">

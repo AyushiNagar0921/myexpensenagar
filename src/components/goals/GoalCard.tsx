@@ -12,13 +12,14 @@ import { toast } from "sonner";
 
 interface GoalCardProps {
   goal: SavingGoal;
-  onDelete: (id: string) => void;
+  onDelete: (id: string) => Promise<void>;
 }
 
 const GoalCard: React.FC<GoalCardProps> = ({ goal, onDelete }) => {
   const { updateSavingGoalAmount } = useAppContext();
   const [isContributionOpen, setIsContributionOpen] = useState(false);
   const [contributionAmount, setContributionAmount] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
   
   // Calculate progress percentage
   const progressPercentage = (goal.currentAmount / goal.targetAmount) * 100;
@@ -49,7 +50,7 @@ const GoalCard: React.FC<GoalCardProps> = ({ goal, onDelete }) => {
   const daysRemaining = goal.deadline ? getDaysRemaining() : null;
   
   // Handle contribution submission
-  const handleContribute = () => {
+  const handleContribute = async () => {
     const amount = parseFloat(contributionAmount);
     
     if (isNaN(amount) || amount <= 0) {
@@ -57,9 +58,28 @@ const GoalCard: React.FC<GoalCardProps> = ({ goal, onDelete }) => {
       return;
     }
     
-    updateSavingGoalAmount(goal.id, amount);
-    setContributionAmount('');
-    setIsContributionOpen(false);
+    setIsLoading(true);
+    
+    try {
+      await updateSavingGoalAmount(goal.id, amount);
+      setContributionAmount('');
+      setIsContributionOpen(false);
+    } catch (error) {
+      console.error('Error contributing to goal:', error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+  
+  const handleDelete = async () => {
+    setIsLoading(true);
+    try {
+      await onDelete(goal.id);
+    } catch (error) {
+      console.error('Error deleting goal:', error);
+    } finally {
+      setIsLoading(false);
+    }
   };
   
   return (
@@ -111,7 +131,7 @@ const GoalCard: React.FC<GoalCardProps> = ({ goal, onDelete }) => {
       <CardFooter className="pt-2 pb-4 flex gap-2">
         <Dialog open={isContributionOpen} onOpenChange={setIsContributionOpen}>
           <DialogTrigger asChild>
-            <Button variant="outline" className="flex-1" disabled={isCompleted}>
+            <Button variant="outline" className="flex-1" disabled={isCompleted || isLoading}>
               {isCompleted ? 'Completed' : 'Add Funds'}
             </Button>
           </DialogTrigger>
@@ -145,6 +165,7 @@ const GoalCard: React.FC<GoalCardProps> = ({ goal, onDelete }) => {
                   variant="outline" 
                   className="flex-1"
                   onClick={() => setIsContributionOpen(false)}
+                  disabled={isLoading}
                 >
                   Cancel
                 </Button>
@@ -152,8 +173,9 @@ const GoalCard: React.FC<GoalCardProps> = ({ goal, onDelete }) => {
                   type="button" 
                   className="flex-1"
                   onClick={handleContribute}
+                  disabled={isLoading}
                 >
-                  Add Funds
+                  {isLoading ? 'Adding...' : 'Add Funds'}
                 </Button>
               </div>
             </div>
@@ -163,9 +185,10 @@ const GoalCard: React.FC<GoalCardProps> = ({ goal, onDelete }) => {
         <Button 
           variant="ghost" 
           className="flex-1"
-          onClick={() => onDelete(goal.id)}
+          onClick={handleDelete}
+          disabled={isLoading}
         >
-          Delete
+          {isLoading ? 'Deleting...' : 'Delete'}
         </Button>
       </CardFooter>
     </Card>

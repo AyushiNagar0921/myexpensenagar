@@ -6,9 +6,37 @@ import CategoryBreakdown from '@/components/dashboard/CategoryBreakdown';
 import SavingsGoalCard from '@/components/dashboard/SavingsGoalsCard';
 import { useAppContext } from '@/contexts/AppContext';
 import IncomeSetupForm from '@/components/auth/IncomeSetupForm';
+import { Skeleton } from "@/components/ui/skeleton";
 
 const Home = () => {
-  const { income } = useAppContext();
+  const { income, isLoading } = useAppContext();
+  
+  // Show loading state
+  if (isLoading) {
+    return (
+      <div className="space-y-6">
+        <div className="flex items-center justify-between">
+          <h2 className="text-3xl font-bold tracking-tight">Dashboard</h2>
+        </div>
+        
+        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+          <div className="col-span-1">
+            <Skeleton className="h-[200px] w-full" />
+          </div>
+          <div className="col-span-1">
+            <Skeleton className="h-[200px] w-full" />
+          </div>
+          <div className="col-span-1">
+            <Skeleton className="h-[200px] w-full" />
+          </div>
+        </div>
+        
+        <div className="grid gap-6 md:grid-cols-1">
+          <Skeleton className="h-[300px] w-full" />
+        </div>
+      </div>
+    );
+  }
   
   // If user hasn't set up their income, show the setup form
   if (!income) {
