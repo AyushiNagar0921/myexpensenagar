@@ -8,6 +8,7 @@ import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { format } from "date-fns";
 import { Calendar as CalendarIcon } from "lucide-react";
+import { cn } from "@/lib/utils";
 import { useAppContext } from '@/contexts/AppContext';
 import { toast } from "sonner";
 
@@ -111,7 +112,7 @@ const LoanForm = ({ onClose }: { onClose: () => void }) => {
               <Label htmlFor="totalAmount">Total Amount</Label>
               <div className="relative">
                 <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
-                  <span className="text-gray-500">$</span>
+                  <span className="text-gray-500">₹</span>
                 </div>
                 <Input
                   id="totalAmount"
@@ -129,7 +130,7 @@ const LoanForm = ({ onClose }: { onClose: () => void }) => {
               <Label htmlFor="remainingAmount">Remaining Amount</Label>
               <div className="relative">
                 <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
-                  <span className="text-gray-500">$</span>
+                  <span className="text-gray-500">₹</span>
                 </div>
                 <Input
                   id="remainingAmount"
@@ -149,7 +150,7 @@ const LoanForm = ({ onClose }: { onClose: () => void }) => {
               <Label htmlFor="monthlyPayment">Monthly Payment</Label>
               <div className="relative">
                 <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
-                  <span className="text-gray-500">$</span>
+                  <span className="text-gray-500">₹</span>
                 </div>
                 <Input
                   id="monthlyPayment"
@@ -196,6 +197,7 @@ const LoanForm = ({ onClose }: { onClose: () => void }) => {
                   selected={nextPaymentDate}
                   onSelect={(date) => date && setNextPaymentDate(date)}
                   initialFocus
+                  className={cn("p-3 pointer-events-auto")}
                 />
               </PopoverContent>
             </Popover>

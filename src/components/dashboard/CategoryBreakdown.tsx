@@ -18,9 +18,16 @@ const CATEGORY_COLORS: Record<ExpenseCategory, string> = {
 
 const CustomTooltip = ({ active, payload }: any) => {
   if (active && payload && payload.length) {
+    // Format currency in INR
+    const amount = new Intl.NumberFormat('en-IN', {
+      style: 'currency',
+      currency: 'INR',
+      minimumFractionDigits: 0
+    }).format(payload[0].value);
+    
     return (
       <div className="bg-white p-2 border rounded shadow-sm">
-        <p className="font-medium">{`${payload[0].name}: ${payload[0].value.toFixed(2)}`}</p>
+        <p className="font-medium">{`${payload[0].name}: ${amount}`}</p>
         <p className="text-sm text-gray-500">{`${payload[0].payload.percentage}%`}</p>
       </div>
     );

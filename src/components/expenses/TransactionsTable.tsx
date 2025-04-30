@@ -3,12 +3,13 @@ import React, { useState } from 'react';
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { useAppContext, ExpenseCategory, Expense } from '@/contexts/AppContext';
+import { useAppContext, ExpenseCategory } from '@/contexts/AppContext';
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { format } from "date-fns";
-import { Calendar as CalendarIcon, Search, X } from "lucide-react";
+import { Calendar as CalendarIcon, Search, X, ArrowDown, ArrowUp } from "lucide-react";
 import { DataRange } from './types';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 const categories: {value: ExpenseCategory | 'all', label: string}[] = [
   { value: 'all', label: 'All Categories' },
@@ -44,52 +45,76 @@ const getCategoryColorClass = (category: ExpenseCategory) => {
 };
 
 const TransactionsTable = () => {
-  const { expenses, deleteExpense } = useAppContext();
+  const { expenses, income, deleteExpense } = useAppContext();
   const [categoryFilter, setCategoryFilter] = useState<ExpenseCategory | 'all'>('all');
   const [searchQuery, setSearchQuery] = useState('');
   const [dateRange, setDateRange] = useState<DataRange>({ from: undefined, to: undefined });
   const [amountRange, setAmountRange] = useState({ min: '', max: '' });
+  const [transactionType, setTransactionType] = useState('all'); // 'all', 'expense', 'income'
   
-  // Apply filters to expenses
-  const filteredExpenses = expenses.filter(expense => {
-    // Filter by category
-    if (categoryFilter !== 'all' && expense.category !== categoryFilter) {
+  // Create a combined array of income and expense transactions
+  const allIncome = income ? [{
+    id: income.id,
+    amount: income.amount,
+    description: income.description || 'Monthly Income',
+    date: income.date,
+    type: 'income'
+  }] : [];
+  
+  const allExpenses = expenses.map(expense => ({
+    ...expense,
+    type: 'expense'
+  }));
+  
+  const allTransactions = [...allIncome, ...allExpenses];
+  
+  // Apply filters to transactions
+  const filteredTransactions = allTransactions.filter(transaction => {
+    // Filter by transaction type
+    if (transactionType !== 'all') {
+      if (transactionType === 'expense' && transaction.type !== 'expense') return false;
+      if (transactionType === 'income' && transaction.type !== 'income') return false;
+    }
+    
+    // Filter by category (only for expenses)
+    if (categoryFilter !== 'all' && transaction.type === 'expense' && 
+        'category' in transaction && transaction.category !== categoryFilter) {
       return false;
     }
     
     // Filter by search query
-    if (searchQuery && !expense.description.toLowerCase().includes(searchQuery.toLowerCase())) {
+    if (searchQuery && !transaction.description.toLowerCase().includes(searchQuery.toLowerCase())) {
       return false;
     }
     
     // Filter by date range
-    if (dateRange.from && new Date(expense.date) < dateRange.from) {
+    if (dateRange.from && new Date(transaction.date) < dateRange.from) {
       return false;
     }
-    if (dateRange.to && new Date(expense.date) > dateRange.to) {
+    if (dateRange.to && new Date(transaction.date) > dateRange.to) {
       return false;
     }
     
     // Filter by amount range
     const minAmount = amountRange.min !== '' ? parseFloat(amountRange.min) : -Infinity;
     const maxAmount = amountRange.max !== '' ? parseFloat(amountRange.max) : Infinity;
-    if (expense.amount < minAmount || expense.amount > maxAmount) {
+    if (transaction.amount < minAmount || transaction.amount > maxAmount) {
       return false;
     }
     
     return true;
   });
   
-  // Sort expenses by date (newest first)
-  const sortedExpenses = [...filteredExpenses].sort(
+  // Sort transactions by date (newest first)
+  const sortedTransactions = [...filteredTransactions].sort(
     (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()
   );
   
   // Format currency
   const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat('en-US', {
+    return new Intl.NumberFormat('en-IN', {
       style: 'currency',
-      currency: 'USD',
+      currency: 'INR',
       minimumFractionDigits: 2
     }).format(amount);
   };
@@ -100,10 +125,19 @@ const TransactionsTable = () => {
     setSearchQuery('');
     setDateRange({ from: undefined, to: undefined });
     setAmountRange({ min: '', max: '' });
+    setTransactionType('all');
   };
   
   return (
     <div className="space-y-4">
+      <Tabs defaultValue="all" value={transactionType} onValueChange={setTransactionType} className="w-full">
+        <TabsList className="grid w-full grid-cols-3">
+          <TabsTrigger value="all">All</TabsTrigger>
+          <TabsTrigger value="expense">Expenses</TabsTrigger>
+          <TabsTrigger value="income">Income</TabsTrigger>
+        </TabsList>
+      </Tabs>
+      
       <div className="flex flex-col gap-4 md:flex-row">
         <div className="flex-1 relative">
           <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
@@ -116,18 +150,20 @@ const TransactionsTable = () => {
         </div>
         
         <div className="flex flex-col sm:flex-row gap-2">
-          <Select value={categoryFilter} onValueChange={(value) => setCategoryFilter(value as ExpenseCategory | 'all')}>
-            <SelectTrigger className="w-full sm:w-[180px]">
-              <SelectValue placeholder="Category" />
-            </SelectTrigger>
-            <SelectContent>
-              {categories.map((category) => (
-                <SelectItem key={category.value} value={category.value}>
-                  {category.label}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+          {transactionType !== 'income' && (
+            <Select value={categoryFilter} onValueChange={(value) => setCategoryFilter(value as ExpenseCategory | 'all')}>
+              <SelectTrigger className="w-full sm:w-[180px]">
+                <SelectValue placeholder="Category" />
+              </SelectTrigger>
+              <SelectContent>
+                {categories.map((category) => (
+                  <SelectItem key={category.value} value={category.value}>
+                    {category.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          )}
           
           <Popover>
             <PopoverTrigger asChild>
@@ -154,11 +190,12 @@ const TransactionsTable = () => {
                 selected={dateRange}
                 onSelect={setDateRange as any}
                 numberOfMonths={1}
+                className="pointer-events-auto"
               />
             </PopoverContent>
           </Popover>
           
-          {(categoryFilter !== 'all' || searchQuery !== '' || dateRange.from || amountRange.min || amountRange.max) && (
+          {(categoryFilter !== 'all' || searchQuery !== '' || dateRange.from || amountRange.min || amountRange.max || transactionType !== 'all') && (
             <Button variant="ghost" size="icon" onClick={clearFilters} className="h-10 w-10">
               <X className="h-4 w-4" />
             </Button>
@@ -170,7 +207,7 @@ const TransactionsTable = () => {
         <div className="flex-1 sm:flex-initial sm:w-36">
           <Input 
             type="number" 
-            placeholder="Min $" 
+            placeholder="Min ₹" 
             value={amountRange.min} 
             onChange={(e) => setAmountRange({...amountRange, min: e.target.value})}
           />
@@ -178,7 +215,7 @@ const TransactionsTable = () => {
         <div className="flex-1 sm:flex-initial sm:w-36">
           <Input 
             type="number" 
-            placeholder="Max $" 
+            placeholder="Max ₹" 
             value={amountRange.max} 
             onChange={(e) => setAmountRange({...amountRange, max: e.target.value})}
           />
@@ -192,44 +229,66 @@ const TransactionsTable = () => {
               <tr className="bg-muted/50">
                 <th className="text-left py-3 px-4 text-sm font-medium text-muted-foreground">Date</th>
                 <th className="text-left py-3 px-4 text-sm font-medium text-muted-foreground">Description</th>
+                <th className="text-left py-3 px-4 text-sm font-medium text-muted-foreground">Type</th>
                 <th className="text-left py-3 px-4 text-sm font-medium text-muted-foreground">Category</th>
                 <th className="text-right py-3 px-4 text-sm font-medium text-muted-foreground">Amount</th>
                 <th className="text-right py-3 px-4 text-sm font-medium text-muted-foreground">Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y">
-              {sortedExpenses.length === 0 ? (
+              {sortedTransactions.length === 0 ? (
                 <tr>
-                  <td colSpan={5} className="py-6 text-center text-muted-foreground">
+                  <td colSpan={6} className="py-6 text-center text-muted-foreground">
                     No transactions found
                   </td>
                 </tr>
               ) : (
-                sortedExpenses.map((expense) => (
-                  <tr key={expense.id} className="hover:bg-muted/50 transition-colors">
+                sortedTransactions.map((transaction) => (
+                  <tr key={transaction.id} className="hover:bg-muted/50 transition-colors">
                     <td className="py-3 px-4 text-sm">
-                      {format(new Date(expense.date), 'MMM d, yyyy')}
+                      {format(new Date(transaction.date), 'MMM d, yyyy')}
                     </td>
                     <td className="py-3 px-4 text-sm font-medium">
-                      {expense.description}
+                      {transaction.description}
                     </td>
                     <td className="py-3 px-4">
-                      <span className={`category-badge ${getCategoryColorClass(expense.category)}`}>
-                        {expense.category.charAt(0).toUpperCase() + expense.category.slice(1)}
-                      </span>
+                      {transaction.type === 'income' ? (
+                        <span className="flex items-center text-green-600 font-medium">
+                          <ArrowDown className="h-4 w-4 mr-1" />
+                          Income
+                        </span>
+                      ) : (
+                        <span className="flex items-center text-red-600 font-medium">
+                          <ArrowUp className="h-4 w-4 mr-1" />
+                          Expense
+                        </span>
+                      )}
+                    </td>
+                    <td className="py-3 px-4">
+                      {transaction.type === 'expense' && 'category' in transaction ? (
+                        <span className={`category-badge ${getCategoryColorClass(transaction.category)}`}>
+                          {transaction.category.charAt(0).toUpperCase() + transaction.category.slice(1)}
+                        </span>
+                      ) : (
+                        <span>-</span>
+                      )}
                     </td>
                     <td className="py-3 px-4 text-sm text-right font-medium">
-                      {formatCurrency(expense.amount)}
+                      <span className={transaction.type === 'income' ? 'text-green-600' : 'text-red-600'}>
+                        {transaction.type === 'income' ? '+' : '-'} {formatCurrency(transaction.amount)}
+                      </span>
                     </td>
                     <td className="py-3 px-4 text-right">
-                      <Button 
-                        variant="ghost" 
-                        size="sm" 
-                        onClick={() => deleteExpense(expense.id)}
-                        className="text-muted-foreground hover:text-destructive"
-                      >
-                        Delete
-                      </Button>
+                      {transaction.type === 'expense' && (
+                        <Button 
+                          variant="ghost" 
+                          size="sm" 
+                          onClick={() => deleteExpense(transaction.id)}
+                          className="text-muted-foreground hover:text-destructive"
+                        >
+                          Delete
+                        </Button>
+                      )}
                     </td>
                   </tr>
                 ))

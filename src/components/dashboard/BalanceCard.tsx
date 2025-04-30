@@ -2,7 +2,7 @@
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
-import { DollarSign } from "lucide-react";
+import { IndianRupee } from "lucide-react";
 import { useAppContext } from '@/contexts/AppContext';
 
 const BalanceCard = () => {
@@ -14,9 +14,9 @@ const BalanceCard = () => {
   const percentSpent = totalIncome > 0 ? (totalSpent / totalIncome) * 100 : 0;
   
   const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat('en-US', {
+    return new Intl.NumberFormat('en-IN', {
       style: 'currency',
-      currency: 'USD',
+      currency: 'INR',
       minimumFractionDigits: 2
     }).format(amount);
   };
@@ -25,7 +25,7 @@ const BalanceCard = () => {
     <Card className="shadow-md">
       <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0">
         <CardTitle className="text-xl font-medium">Current Balance</CardTitle>
-        <DollarSign className="w-5 h-5 text-muted-foreground" />
+        <IndianRupee className="w-5 h-5 text-muted-foreground" />
       </CardHeader>
       <CardContent>
         <div className="text-3xl font-bold text-primary">

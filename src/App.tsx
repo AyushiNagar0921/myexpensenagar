@@ -14,6 +14,7 @@ import AddExpense from "./pages/AddExpense";
 import Transactions from "./pages/Transactions";
 import SavingGoals from "./pages/SavingGoals";
 import Loans from "./pages/Loans";
+import Profile from "./pages/Profile";
 import NotFound from "./pages/NotFound";
 
 // Components
@@ -74,6 +75,7 @@ const AppRoutes = () => {
       <Route path="/transactions" element={<PrivateRoute><Layout><Transactions /></Layout></PrivateRoute>} />
       <Route path="/goals" element={<PrivateRoute><Layout><SavingGoals /></Layout></PrivateRoute>} />
       <Route path="/loans" element={<PrivateRoute><Layout><Loans /></Layout></PrivateRoute>} />
+      <Route path="/profile" element={<PrivateRoute><Layout><Profile /></Layout></PrivateRoute>} />
       
       <Route path="*" element={<NotFound />} />
     </Routes>

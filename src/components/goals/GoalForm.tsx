@@ -88,7 +88,7 @@ const GoalForm = ({ onClose }: { onClose: () => void }) => {
             <Label htmlFor="targetAmount">Target Amount</Label>
             <div className="relative">
               <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
-                <span className="text-gray-500">$</span>
+                <span className="text-gray-500">₹</span>
               </div>
               <Input
                 id="targetAmount"
@@ -106,7 +106,7 @@ const GoalForm = ({ onClose }: { onClose: () => void }) => {
             <Label htmlFor="currentAmount">Current Progress (Optional)</Label>
             <div className="relative">
               <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
-                <span className="text-gray-500">$</span>
+                <span className="text-gray-500">₹</span>
               </div>
               <Input
                 id="currentAmount"
@@ -138,6 +138,7 @@ const GoalForm = ({ onClose }: { onClose: () => void }) => {
                   onSelect={setDeadline}
                   disabled={(date) => date < new Date()}
                   initialFocus
+                  className={cn("p-3 pointer-events-auto")}
                 />
               </PopoverContent>
             </Popover>
