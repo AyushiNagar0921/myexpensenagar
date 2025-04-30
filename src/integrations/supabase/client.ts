@@ -14,21 +14,4 @@ export const supabase = createClient<Database>(SUPABASE_URL, SUPABASE_PUBLISHABL
   }
 });
 
-// Initialize storage bucket for avatars if it doesn't exist yet
-const initializeStorage = async () => {
-  try {
-    // Check if avatars bucket exists
-    const { data: buckets } = await supabase.storage.listBuckets();
-    const avatarsBucketExists = buckets?.some(bucket => bucket.name === 'avatars');
-    
-    if (!avatarsBucketExists) {
-      console.log('Creating avatars storage bucket');
-      // This would normally be done via SQL migrations, but we're doing it here for simplicity
-      // In a production app, use SQL migrations instead
-    }
-  } catch (error) {
-    console.error('Error initializing storage:', error);
-  }
-};
-
-initializeStorage();
+// Storage bucket has already been created via SQL migration
