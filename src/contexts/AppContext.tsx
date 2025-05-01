@@ -1,4 +1,3 @@
-
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
@@ -94,6 +93,39 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   const remainingBalance = totalIncome - totalSpent;
   
   useEffect(() => {
+    // First ensure the user profile exists
+    const createUserProfileIfNeeded = async () => {
+      try {
+        // Get current user
+        const { data: userData } = await supabase.auth.getUser();
+        if (!userData?.user) return;
+        
+        // Check if profile exists
+        const { data: profileData, error: profileError } = await supabase
+          .from('profiles')
+          .select('*')
+          .eq('id', userData.user.id)
+          .single();
+          
+        // If profile doesn't exist, create it
+        if (profileError && profileError.code === 'PGRST116') {
+          const { error: insertError } = await supabase
+            .from('profiles')
+            .insert({ id: userData.user.id });
+            
+          if (insertError) {
+            console.error('Error creating user profile:', insertError);
+            return;
+          }
+        }
+      } catch (error) {
+        console.error('Error checking/creating user profile:', error);
+      }
+    };
+    
+    createUserProfileIfNeeded();
+    
+    // Then fetch data
     const fetchIncomes = async () => {
       setIsLoading(true);
       try {

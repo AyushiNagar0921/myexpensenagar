@@ -3,79 +3,84 @@ import React, { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Textarea } from '@/components/ui/textarea';
-import { CalendarIcon } from 'lucide-react';
-import { format } from 'date-fns';
-import { Calendar } from '@/components/ui/calendar';
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { useNavigate } from 'react-router-dom';
-import { toast } from 'sonner';
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useAppContext } from '@/contexts/AppContext';
-import { cn } from '@/lib/utils';
-
-const INCOME_CATEGORIES = [
-  'Salary',
-  'Freelance',
-  'Business',
-  'Investments',
-  'Rental',
-  'Gifts',
-  'Other'
-];
+import { toast } from 'sonner';
+import { useAuth } from '@/contexts/AuthContext';
+import { useNavigate } from 'react-router-dom';
 
 const formSchema = z.object({
-  amount: z.coerce.number().positive('Amount must be positive'),
-  date: z.date(),
-  category: z.string().nonempty('Please select a category'),
-  description: z.string().optional()
+  amount: z.coerce.number().positive('Income must be a positive number'),
+  description: z.string().optional(),
+  category: z.string().optional(),
 });
 
-type FormValues = z.infer<typeof formSchema>;
+const categoryOptions = [
+  { label: 'Salary', value: 'salary' },
+  { label: 'Freelance', value: 'freelance' },
+  { label: 'Business', value: 'business' },
+  { label: 'Investment', value: 'investment' },
+  { label: 'Gift', value: 'gift' },
+  { label: 'Other', value: 'other' },
+];
 
 const IncomeForm = () => {
   const { addIncome, isLoading } = useAppContext();
+  const { user } = useAuth();
   const navigate = useNavigate();
+  const [isSubmitting, setIsSubmitting] = useState(false);
   
-  const form = useForm<FormValues>({
+  const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
       amount: 0,
-      date: new Date(),
-      category: 'Salary',
-      description: ''
-    }
+      description: '',
+      category: 'salary',
+    },
   });
   
-  const onSubmit = async (values: FormValues) => {
+  const onSubmit = async (values: z.infer<typeof formSchema>) => {
+    if (!user) {
+      toast.error('You must be logged in to add income');
+      navigate('/auth');
+      return;
+    }
+    
+    setIsSubmitting(true);
     try {
       await addIncome({
         amount: values.amount,
-        date: values.date,
+        date: new Date(),
+        description: values.description,
         category: values.category,
-        description: values.description || undefined
       });
-      toast.success('Income added successfully');
+      
+      form.reset();
+      toast.success('Income added successfully!');
       navigate('/');
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error adding income:', error);
-      toast.error('Failed to add income');
+      toast.error(error.message || 'Failed to add income');
+    } finally {
+      setIsSubmitting(false);
     }
   };
   
   return (
-    <Card className="w-full max-w-md mx-auto">
+    <Card>
       <CardHeader>
         <CardTitle>Add Income</CardTitle>
-        <CardDescription>Add your income from various sources</CardDescription>
+        <CardDescription>
+          Record your income to better track your finances
+        </CardDescription>
       </CardHeader>
-      <CardContent>
-        <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+      <Form {...form}>
+        <form onSubmit={form.handleSubmit(onSubmit)}>
+          <CardContent className="space-y-4">
             <FormField
               control={form.control}
               name="amount"
@@ -83,12 +88,12 @@ const IncomeForm = () => {
                 <FormItem>
                   <FormLabel>Amount (₹)</FormLabel>
                   <FormControl>
-                    <div className="relative">
-                      <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
-                        <span className="text-gray-500">₹</span>
-                      </div>
-                      <Input className="pl-8" placeholder="0.00" {...field} />
-                    </div>
+                    <Input 
+                      type="number" 
+                      placeholder="0" 
+                      {...field} 
+                      onChange={(e) => field.onChange(e.target.valueAsNumber)}
+                    />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -101,16 +106,19 @@ const IncomeForm = () => {
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Category</FormLabel>
-                  <Select onValueChange={field.onChange} defaultValue={field.value}>
+                  <Select 
+                    onValueChange={field.onChange} 
+                    defaultValue={field.value}
+                  >
                     <FormControl>
                       <SelectTrigger>
                         <SelectValue placeholder="Select a category" />
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
-                      {INCOME_CATEGORIES.map((category) => (
-                        <SelectItem key={category} value={category}>
-                          {category}
+                      {categoryOptions.map((option) => (
+                        <SelectItem key={option.value} value={option.value}>
+                          {option.label}
                         </SelectItem>
                       ))}
                     </SelectContent>
@@ -122,71 +130,32 @@ const IncomeForm = () => {
             
             <FormField
               control={form.control}
-              name="date"
-              render={({ field }) => (
-                <FormItem className="flex flex-col">
-                  <FormLabel>Date</FormLabel>
-                  <Popover>
-                    <PopoverTrigger asChild>
-                      <FormControl>
-                        <Button
-                          variant="outline"
-                          className={cn(
-                            "w-full pl-3 text-left font-normal",
-                            !field.value && "text-muted-foreground"
-                          )}
-                        >
-                          {field.value ? (
-                            format(field.value, "PPP")
-                          ) : (
-                            <span>Pick a date</span>
-                          )}
-                          <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
-                        </Button>
-                      </FormControl>
-                    </PopoverTrigger>
-                    <PopoverContent className="w-auto p-0" align="start">
-                      <Calendar
-                        mode="single"
-                        selected={field.value}
-                        onSelect={field.onChange}
-                        initialFocus
-                      />
-                    </PopoverContent>
-                  </Popover>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            
-            <FormField
-              control={form.control}
               name="description"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Description (Optional)</FormLabel>
+                  <FormLabel>Description</FormLabel>
                   <FormControl>
-                    <Textarea
-                      placeholder="Enter any additional details"
-                      className="resize-none"
-                      {...field}
-                    />
+                    <Input placeholder="Monthly salary" {...field} />
                   </FormControl>
+                  <FormDescription>
+                    Add a short description for this income
+                  </FormDescription>
                   <FormMessage />
                 </FormItem>
               )}
             />
-            
-            <Button
-              type="submit"
-              className="w-full"
-              disabled={isLoading}
+          </CardContent>
+          <CardFooter>
+            <Button 
+              type="submit" 
+              className="w-full" 
+              disabled={isSubmitting || isLoading}
             >
-              {isLoading ? 'Adding Income...' : 'Add Income'}
+              {isSubmitting ? 'Adding...' : 'Add Income'}
             </Button>
-          </form>
-        </Form>
-      </CardContent>
+          </CardFooter>
+        </form>
+      </Form>
     </Card>
   );
 };

@@ -2,7 +2,7 @@
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { Button } from "@/components/ui/button";
-import { Home, PlusCircle, History, Heart, Wallet, LogOut, DollarSign } from 'lucide-react';
+import { Home, PlusCircle, History, Heart, Wallet, LogOut, DollarSign, User } from 'lucide-react';
 import { useAppContext } from '@/contexts/AppContext';
 
 const NavBar = () => {
@@ -15,6 +15,7 @@ const NavBar = () => {
     { path: '/add-expense', icon: <PlusCircle className="w-5 h-5" />, label: 'Add' },
     { path: '/transactions', icon: <History className="w-5 h-5" />, label: 'History' },
     { path: '/goals', icon: <Heart className="w-5 h-5" />, label: 'Goals' },
+    { path: '/profile', icon: <User className="w-5 h-5" />, label: 'Profile' }
   ];
 
   return (
@@ -48,6 +49,7 @@ export const Sidebar = () => {
     { path: '/transactions', icon: <History className="w-5 h-5" />, label: 'Transactions' },
     { path: '/goals', icon: <Heart className="w-5 h-5" />, label: 'Saving Goals' },
     { path: '/loans', icon: <Wallet className="w-5 h-5" />, label: 'Loans & EMIs' },
+    { path: '/profile', icon: <User className="w-5 h-5" />, label: 'Profile' }
   ];
 
   return (

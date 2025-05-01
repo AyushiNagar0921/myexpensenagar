@@ -1,12 +1,15 @@
-
 import React, { useEffect, useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Progress } from "@/components/ui/progress";
 import { useAuth } from '@/contexts/AuthContext';
 import { useAppContext } from '@/contexts/AppContext';
 import { useNavigate } from 'react-router-dom';
 import IncomeSetupForm from '@/components/auth/IncomeSetupForm';
 import BudgetSetupPrompt from '@/components/budget/BudgetSetupPrompt';
+import BalanceCard from '@/components/dashboard/BalanceCard';
+import CategoryBreakdown from '@/components/dashboard/CategoryBreakdown';
+import RecentExpenses from '@/components/dashboard/RecentExpenses';
+import SavingsGoalCard from '@/components/dashboard/SavingsGoalsCard';
+import ActiveLoans from '@/components/dashboard/ActiveLoans';
 
 const Home = () => {
   const { user, isLoading: authLoading } = useAuth();
@@ -102,64 +105,24 @@ const Home = () => {
     return <BudgetSetupPrompt onComplete={handleBudgetPromptComplete} />;
   }
   
-  const totalIncome = incomes.reduce((sum, income) => sum + income.amount, 0);
-  const totalSpent = expenses ? expenses.reduce((sum, expense) => sum + expense.amount, 0) : 0;
-  const remainingAmount = totalIncome - totalSpent;
-
-  // Format currency to INR
-  const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat('en-IN', {
-      style: 'currency',
-      currency: 'INR',
-      minimumFractionDigits: 0,
-      maximumFractionDigits: 0,
-    }).format(amount);
-  };
-  
   return (
-    <div className="container max-w-md mx-auto py-8">
-      <Card>
-        <CardHeader className="space-y-1">
-          <CardTitle className="text-2xl font-bold">Dashboard</CardTitle>
-          <CardDescription>Your financial overview</CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="space-y-2">
-            <h3 className="text-lg font-semibold">Monthly Overview</h3>
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <p className="text-muted-foreground">Income</p>
-                <p className="font-medium">{formatCurrency(totalIncome)}</p>
-              </div>
-              <div>
-                <p className="text-muted-foreground">Spent</p>
-                <p className="font-medium">{formatCurrency(totalSpent)}</p>
-              </div>
-              <div>
-                <p className="text-muted-foreground">Remaining</p>
-                <p className="font-medium">{formatCurrency(remainingAmount)}</p>
-              </div>
-              {loans && loans.length > 0 && (
-                <div>
-                  <p className="text-muted-foreground">Active Loans</p>
-                  <p className="font-medium">{loans.length}</p>
-                </div>
-              )}
-            </div>
-          </div>
-          
-          <div className="space-y-2">
-            <h3 className="text-lg font-semibold">Spending Progress</h3>
-            <p className="text-muted-foreground">
-              {spentPercentage}% of your income spent
-            </p>
-            <Progress 
-              value={spentPercentage}
-              className="h-2 mt-2"
-            />
-          </div>
-        </CardContent>
-      </Card>
+    <div className="container mx-auto py-6">
+      <h2 className="text-3xl font-bold mb-6">Dashboard</h2>
+      
+      <div className="grid gap-6 md:grid-cols-2">
+        {/* Left column */}
+        <div className="space-y-6">
+          <BalanceCard />
+          <CategoryBreakdown />
+        </div>
+        
+        {/* Right column */}
+        <div className="space-y-6">
+          <RecentExpenses />
+          <SavingsGoalCard />
+          {loans && loans.length > 0 && <ActiveLoans />}
+        </div>
+      </div>
     </div>
   );
 };
