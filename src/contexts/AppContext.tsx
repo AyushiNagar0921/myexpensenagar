@@ -1,4 +1,3 @@
-
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
@@ -77,7 +76,7 @@ interface AppContextType {
   logout: () => void;
   isLoading: boolean;
   profileExists: boolean;
-  ensureProfileExists: () => Promise<void>;
+  ensureProfileExists: () => Promise<boolean>; // Changed from Promise<void> to Promise<boolean>
 }
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
@@ -97,7 +96,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   const remainingBalance = totalIncome - totalSpent;
   
   // Ensure user profile exists
-  const ensureProfileExists = async () => {
+  const ensureProfileExists = async (): Promise<boolean> => {
     try {
       // Get current user
       const { data: userData } = await supabase.auth.getUser();
