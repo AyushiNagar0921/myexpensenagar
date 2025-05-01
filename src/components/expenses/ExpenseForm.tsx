@@ -11,24 +11,24 @@ import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { format } from "date-fns";
 import { Calendar as CalendarIcon } from "lucide-react";
-import { useAppContext, ExpenseCategory } from '@/contexts/AppContext';
+import { useAppContext, ExpenseCategory, EXPENSE_CATEGORIES } from '@/contexts/AppContext';
 import { toast } from "sonner";
 
 const categories: {value: ExpenseCategory, label: string}[] = [
-  { value: 'food', label: 'Food' },
-  { value: 'shopping', label: 'Shopping' },
-  { value: 'travel', label: 'Travel' },
-  { value: 'bills', label: 'Bills' },
-  { value: 'entertainment', label: 'Entertainment' },
-  { value: 'health', label: 'Health' },
-  { value: 'other', label: 'Other' }
+  { value: 'Food', label: 'Food' },
+  { value: 'Shopping', label: 'Shopping' },
+  { value: 'Transportation', label: 'Transportation' },
+  { value: 'Entertainment', label: 'Entertainment' },
+  { value: 'Health', label: 'Health' },
+  { value: 'Utilities', label: 'Utilities' },
+  { value: 'Other', label: 'Other' }
 ];
 
 const ExpenseForm = () => {
   const navigate = useNavigate();
   const { addExpense } = useAppContext();
   const [amount, setAmount] = useState('');
-  const [category, setCategory] = useState<ExpenseCategory>('food');
+  const [category, setCategory] = useState<ExpenseCategory>('Food');
   const [description, setDescription] = useState('');
   const [date, setDate] = useState<Date>(new Date());
   const [isLoading, setIsLoading] = useState(false);
@@ -64,7 +64,7 @@ const ExpenseForm = () => {
       
       // Reset form and navigate back to dashboard
       setAmount('');
-      setCategory('food');
+      setCategory('Food');
       setDescription('');
       setDate(new Date());
       
@@ -88,7 +88,7 @@ const ExpenseForm = () => {
             <Label htmlFor="amount">Amount</Label>
             <div className="relative">
               <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
-                <span className="text-gray-500">$</span>
+                <span className="text-gray-500">₹</span>
               </div>
               <Input
                 id="amount"

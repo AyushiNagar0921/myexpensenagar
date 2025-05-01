@@ -16,7 +16,7 @@ export interface Expense {
   amount: number;
   date: Date;
   description?: string;
-  category: string;
+  category: ExpenseCategory;
 }
 
 export interface SavingGoal {
@@ -37,15 +37,20 @@ export interface Loan {
   nextPaymentDate: Date;
 }
 
-export type ExpenseCategory = 'Housing' | 'Food' | 'Transportation' | 'Entertainment' | 'Health' | 'Shopping' | 'Utilities' | 'Other';
+export interface BudgetCategory {
+  category: ExpenseCategory;
+  amount: number;
+  percentage: number;
+}
+
+export type ExpenseCategory = 'Food' | 'Shopping' | 'Transportation' | 'Entertainment' | 'Health' | 'Utilities' | 'Other';
 
 export const EXPENSE_CATEGORIES: ExpenseCategory[] = [
-  'Housing',
   'Food',
+  'Shopping',
   'Transportation',
   'Entertainment',
   'Health',
-  'Shopping',
   'Utilities',
   'Other'
 ];
@@ -55,15 +60,20 @@ interface AppContextType {
   expenses: Expense[];
   savingGoals: SavingGoal[];
   loans: Loan[];
+  income?: Income;
+  remainingBalance: number;
   addIncome: (income: Omit<Income, "id">) => Promise<void>;
   setIncome: (incomeData: Omit<Income, "id">) => Promise<void>;
   addExpense: (expense: Omit<Expense, "id">) => Promise<void>;
+  deleteExpense: (id: string) => Promise<void>;
   addSavingGoal: (goal: Omit<SavingGoal, "id">) => Promise<void>;
   updateSavingGoal: (goal: SavingGoal) => Promise<void>;
+  updateSavingGoalAmount: (id: string, amount: number) => Promise<void>;
   deleteSavingGoal: (id: string) => Promise<void>;
   addLoan: (loan: Omit<Loan, "id">) => Promise<void>;
   updateLoanPayment: (loanId: string, paymentAmount: number) => Promise<void>;
   deleteLoan: (id: string) => Promise<void>;
+  saveBudgetCategories: (categories: BudgetCategory[]) => Promise<void>;
   logout: () => void;
   isLoading: boolean;
 }
@@ -76,6 +86,12 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   const [savingGoals, setSavingGoals] = useState<SavingGoal[]>([]);
   const [loans, setLoans] = useState<Loan[]>([]);
   const [isLoading, setIsLoading] = useState(false);
+  
+  // Calculate remaining balance
+  const income = incomes.length > 0 ? incomes[0] : undefined;
+  const totalIncome = income ? income.amount : 0;
+  const totalSpent = expenses.reduce((sum, expense) => sum + expense.amount, 0);
+  const remainingBalance = totalIncome - totalSpent;
   
   useEffect(() => {
     const fetchIncomes = async () => {
@@ -202,7 +218,12 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       
       const { data, error } = await supabase
         .from('income')
-        .insert([income])
+        .insert([{
+          amount: income.amount,
+          date: income.date,
+          description: income.description,
+          category: income.category
+        }])
         .select()
         .single();
       
@@ -276,6 +297,27 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     }
   };
   
+  const deleteExpense = async (id: string) => {
+    try {
+      setIsLoading(true);
+      
+      const { error } = await supabase
+        .from('expenses')
+        .delete()
+        .eq('id', id);
+      
+      if (error) throw error;
+      
+      setExpenses((prevExpenses) => prevExpenses.filter((expense) => expense.id !== id));
+      toast.success('Expense deleted successfully!');
+    } catch (error: any) {
+      console.error('Error deleting expense:', error);
+      toast.error(error.message || 'Failed to delete expense');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+  
   const addSavingGoal = async (goal: Omit<SavingGoal, "id">) => {
     try {
       setIsLoading(true);
@@ -332,6 +374,36 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     } catch (error: any) {
       console.error('Error updating saving goal:', error);
       toast.error(error.message || 'Failed to update saving goal');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+  
+  const updateSavingGoalAmount = async (id: string, amount: number) => {
+    try {
+      setIsLoading(true);
+      
+      const goal = savingGoals.find((g) => g.id === id);
+      if (!goal) throw new Error('Goal not found');
+      
+      const newCurrentAmount = goal.currentAmount + amount;
+      
+      const { error } = await supabase
+        .from('saving_goals')
+        .update({
+          current_amount: newCurrentAmount
+        })
+        .eq('id', id);
+      
+      if (error) throw error;
+      
+      setSavingGoals((prevGoals) =>
+        prevGoals.map((g) => (g.id === id ? { ...g, currentAmount: newCurrentAmount } : g))
+      );
+      toast.success('Contribution added successfully!');
+    } catch (error: any) {
+      console.error('Error updating saving goal amount:', error);
+      toast.error(error.message || 'Failed to update saving goal amount');
     } finally {
       setIsLoading(false);
     }
@@ -466,6 +538,40 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
+  const saveBudgetCategories = async (categories: BudgetCategory[]) => {
+    try {
+      setIsLoading(true);
+      
+      // First delete existing budget categories
+      const { error: deleteError } = await supabase
+        .from('budget_categories')
+        .delete()
+        .neq('id', '00000000-0000-0000-0000-000000000000'); // Delete all
+      
+      if (deleteError) throw deleteError;
+      
+      // Then insert new categories
+      const categoriesToInsert = categories.map(cat => ({
+        category: cat.category,
+        amount: cat.amount,
+        percentage: cat.percentage
+      }));
+      
+      const { error: insertError } = await supabase
+        .from('budget_categories')
+        .insert(categoriesToInsert);
+      
+      if (insertError) throw insertError;
+      
+      toast.success('Budget categories saved successfully!');
+    } catch (error: any) {
+      console.error('Error saving budget categories:', error);
+      toast.error(error.message || 'Failed to save budget categories');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   const logout = async () => {
     try {
       setIsLoading(true);
@@ -491,15 +597,20 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         expenses,
         savingGoals,
         loans,
+        income,
+        remainingBalance,
         addIncome,
         setIncome,
         addExpense,
+        deleteExpense,
         addSavingGoal,
         updateSavingGoal,
+        updateSavingGoalAmount,
         deleteSavingGoal,
         addLoan,
         updateLoanPayment,
         deleteLoan,
+        saveBudgetCategories,
         logout,
         isLoading,
       }}

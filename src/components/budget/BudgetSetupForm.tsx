@@ -19,30 +19,30 @@ interface BudgetSetupProps {
 }
 
 const INITIAL_BUDGET: BudgetItem[] = [
-  { category: 'food', amount: 0, percentage: 25 },
-  { category: 'shopping', amount: 0, percentage: 15 },
-  { category: 'bills', amount: 0, percentage: 25 },
-  { category: 'travel', amount: 0, percentage: 10 },
-  { category: 'entertainment', amount: 0, percentage: 10 },
-  { category: 'health', amount: 0, percentage: 10 },
-  { category: 'other', amount: 0, percentage: 5 },
+  { category: 'Food', amount: 0, percentage: 25 },
+  { category: 'Shopping', amount: 0, percentage: 15 },
+  { category: 'Transportation', amount: 0, percentage: 25 },
+  { category: 'Utilities', amount: 0, percentage: 10 },
+  { category: 'Entertainment', amount: 0, percentage: 10 },
+  { category: 'Health', amount: 0, percentage: 10 },
+  { category: 'Other', amount: 0, percentage: 5 },
 ];
 
 const getCategoryLabel = (category: ExpenseCategory): string => {
   switch (category) {
-    case 'food':
+    case 'Food':
       return 'Food & Groceries';
-    case 'shopping':
+    case 'Shopping':
       return 'Shopping';
-    case 'travel':
+    case 'Transportation':
       return 'Travel & Transportation';
-    case 'bills':
+    case 'Utilities':
       return 'Bills & Utilities';
-    case 'entertainment':
+    case 'Entertainment':
       return 'Entertainment';
-    case 'health':
+    case 'Health':
       return 'Health & Wellness';
-    case 'other':
+    case 'Other':
       return 'Others';
     default:
       return category;
@@ -51,19 +51,19 @@ const getCategoryLabel = (category: ExpenseCategory): string => {
 
 const getCategoryColor = (category: ExpenseCategory): string => {
   switch (category) {
-    case 'food':
+    case 'Food':
       return 'bg-category-food';
-    case 'shopping':
+    case 'Shopping':
       return 'bg-category-shopping';
-    case 'travel':
+    case 'Transportation':
       return 'bg-category-travel';
-    case 'bills':
+    case 'Utilities':
       return 'bg-category-bills';
-    case 'entertainment':
+    case 'Entertainment':
       return 'bg-category-entertainment';
-    case 'health':
+    case 'Health':
       return 'bg-category-health';
-    case 'other':
+    case 'Other':
       return 'bg-category-other';
     default:
       return 'bg-gray-400';

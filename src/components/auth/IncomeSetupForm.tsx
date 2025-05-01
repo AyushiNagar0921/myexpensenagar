@@ -1,16 +1,17 @@
 
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
 import { useAppContext } from '@/contexts/AppContext';
+import { IndianRupee } from 'lucide-react';
 
 const IncomeSetupForm = () => {
+  const navigate = useNavigate();
   const { setIncome } = useAppContext();
   const [amount, setAmount] = useState('');
-  const [description, setDescription] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   
   const handleSubmit = async (e: React.FormEvent) => {
@@ -24,65 +25,52 @@ const IncomeSetupForm = () => {
     
     try {
       await setIncome({
-        id: '', // New income will get ID from Supabase
         amount: parseFloat(amount),
         date: new Date(),
-        description: description || undefined
+        description: 'Monthly Income'
       });
+      navigate('/');
     } catch (error) {
-      console.error('Error setting income:', error);
+      console.error(error);
     } finally {
       setIsLoading(false);
     }
   };
   
   return (
-    <div className="container max-w-md mx-auto py-8">
-      <Card>
+    <div className="flex items-center justify-center min-h-screen p-4">
+      <Card className="w-full max-w-md">
         <CardHeader className="space-y-1 text-center">
           <CardTitle className="text-2xl font-bold">Welcome!</CardTitle>
           <CardDescription>
-            Please set up your monthly income to get started
+            Let's set up your monthly income to get started
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <form onSubmit={handleSubmit} className="space-y-4">
+          <form onSubmit={handleSubmit} className="space-y-6">
             <div className="space-y-2">
-              <Label htmlFor="amount">Monthly Income</Label>
+              <Label htmlFor="income" className="text-base">Your Monthly Income</Label>
               <div className="relative">
                 <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
-                  <span className="text-gray-500">$</span>
+                  <IndianRupee className="h-4 w-4 text-gray-500" />
                 </div>
                 <Input
-                  id="amount"
+                  id="income"
                   type="number"
-                  placeholder="0.00"
+                  placeholder="0"
                   className="pl-8"
                   value={amount}
                   onChange={(e) => setAmount(e.target.value)}
                   required
                 />
               </div>
+              <p className="text-sm text-muted-foreground pt-1">
+                This helps us provide personalized financial insights
+              </p>
             </div>
             
-            <div className="space-y-2">
-              <Label htmlFor="description">Description (Optional)</Label>
-              <Textarea
-                id="description"
-                placeholder="e.g., Monthly salary, Freelance income, etc."
-                value={description}
-                onChange={(e) => setDescription(e.target.value)}
-                className="resize-none"
-                rows={3}
-              />
-            </div>
-            
-            <Button 
-              type="submit" 
-              className="w-full" 
-              disabled={isLoading || !amount || parseFloat(amount) <= 0}
-            >
-              {isLoading ? 'Saving...' : 'Continue'}
+            <Button type="submit" className="w-full" disabled={isLoading}>
+              {isLoading ? 'Setting up...' : 'Continue'}
             </Button>
           </form>
         </CardContent>

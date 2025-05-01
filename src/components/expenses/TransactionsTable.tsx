@@ -13,31 +13,31 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 const categories: {value: ExpenseCategory | 'all', label: string}[] = [
   { value: 'all', label: 'All Categories' },
-  { value: 'food', label: 'Food' },
-  { value: 'shopping', label: 'Shopping' },
-  { value: 'travel', label: 'Travel' },
-  { value: 'bills', label: 'Bills' },
-  { value: 'entertainment', label: 'Entertainment' },
-  { value: 'health', label: 'Health' },
-  { value: 'other', label: 'Other' }
+  { value: 'Food', label: 'Food' },
+  { value: 'Shopping', label: 'Shopping' },
+  { value: 'Transportation', label: 'Transportation' },
+  { value: 'Utilities', label: 'Utilities' },
+  { value: 'Entertainment', label: 'Entertainment' },
+  { value: 'Health', label: 'Health' },
+  { value: 'Other', label: 'Other' }
 ];
 
 // Get category badge color class
 const getCategoryColorClass = (category: ExpenseCategory) => {
   switch (category) {
-    case 'food':
+    case 'Food':
       return 'bg-category-food text-white';
-    case 'shopping':
+    case 'Shopping':
       return 'bg-category-shopping text-white';
-    case 'travel':
+    case 'Transportation':
       return 'bg-category-travel text-white';
-    case 'bills':
+    case 'Utilities':
       return 'bg-category-bills text-white';
-    case 'entertainment':
+    case 'Entertainment':
       return 'bg-category-entertainment text-white';
-    case 'health':
+    case 'Health':
       return 'bg-category-health text-white';
-    case 'other':
+    case 'Other':
       return 'bg-category-other text-white';
     default:
       return 'bg-gray-200 text-gray-800';
@@ -45,7 +45,7 @@ const getCategoryColorClass = (category: ExpenseCategory) => {
 };
 
 const TransactionsTable = () => {
-  const { expenses, income, deleteExpense } = useAppContext();
+  const { expenses, incomes, deleteExpense } = useAppContext();
   const [categoryFilter, setCategoryFilter] = useState<ExpenseCategory | 'all'>('all');
   const [searchQuery, setSearchQuery] = useState('');
   const [dateRange, setDateRange] = useState<DataRange>({ from: undefined, to: undefined });
@@ -53,13 +53,13 @@ const TransactionsTable = () => {
   const [transactionType, setTransactionType] = useState('all'); // 'all', 'expense', 'income'
   
   // Create a combined array of income and expense transactions
-  const allIncome = income ? [{
+  const allIncome = incomes ? incomes.map(income => ({
     id: income.id,
     amount: income.amount,
     description: income.description || 'Monthly Income',
     date: income.date,
     type: 'income' as const
-  }] : [];
+  })) : [];
   
   const allExpenses = expenses.map(expense => ({
     ...expense,
@@ -267,7 +267,7 @@ const TransactionsTable = () => {
                     <td className="py-3 px-4">
                       {transaction.type === 'expense' && 'category' in transaction ? (
                         <span className={`inline-block px-2 py-1 rounded-full text-xs ${getCategoryColorClass(transaction.category)}`}>
-                          {transaction.category.charAt(0).toUpperCase() + transaction.category.slice(1)}
+                          {transaction.category}
                         </span>
                       ) : (
                         <span>-</span>

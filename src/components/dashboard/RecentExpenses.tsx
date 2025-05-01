@@ -1,32 +1,26 @@
 
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { useAppContext } from '@/contexts/AppContext';
-import { ExpenseCategory } from '@/contexts/AppContext';
+import { useAppContext, ExpenseCategory } from '@/contexts/AppContext';
 
 // Icons for each expense category
 const getCategoryIcon = (category: ExpenseCategory) => {
   switch (category) {
-    case 'food':
+    case 'Food':
       return <div className="bg-category-food/20 p-2 rounded-full"><div className="h-2 w-2 bg-category-food rounded-full"></div></div>;
-    case 'shopping':
+    case 'Shopping':
       return <div className="bg-category-shopping/20 p-2 rounded-full"><div className="h-2 w-2 bg-category-shopping rounded-full"></div></div>;
-    case 'travel':
+    case 'Transportation':
       return <div className="bg-category-travel/20 p-2 rounded-full"><div className="h-2 w-2 bg-category-travel rounded-full"></div></div>;
-    case 'bills':
+    case 'Utilities':
       return <div className="bg-category-bills/20 p-2 rounded-full"><div className="h-2 w-2 bg-category-bills rounded-full"></div></div>;
-    case 'entertainment':
+    case 'Entertainment':
       return <div className="bg-category-entertainment/20 p-2 rounded-full"><div className="h-2 w-2 bg-category-entertainment rounded-full"></div></div>;
-    case 'health':
+    case 'Health':
       return <div className="bg-category-health/20 p-2 rounded-full"><div className="h-2 w-2 bg-category-health rounded-full"></div></div>;
     default:
       return <div className="bg-category-other/20 p-2 rounded-full"><div className="h-2 w-2 bg-category-other rounded-full"></div></div>;
   }
-};
-
-// Format the category name to be title cased
-const formatCategory = (category: string) => {
-  return category.charAt(0).toUpperCase() + category.slice(1);
 };
 
 // Format the date to a readable string
@@ -83,7 +77,7 @@ const RecentExpenses = () => {
                   <div>
                     <p className="text-sm font-medium">{expense.description}</p>
                     <p className="text-xs text-muted-foreground">
-                      {formatCategory(expense.category)} • {formatDate(expense.date)}
+                      {expense.category} • {formatDate(expense.date)}
                     </p>
                   </div>
                 </div>
