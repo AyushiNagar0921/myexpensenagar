@@ -217,13 +217,19 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     try {
       setIsLoading(true);
       
+      // Get user session for user_id
+      const { data: userData } = await supabase.auth.getUser();
+      if (!userData?.user) throw new Error('User not authenticated');
+      const user_id = userData.user.id;
+      
       const { data, error } = await supabase
         .from('income')
         .insert([{
           amount: income.amount,
           date: income.date.toISOString(),
           description: income.description,
-          category: income.category
+          category: income.category,
+          user_id
         }])
         .select()
         .single();
@@ -247,13 +253,19 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     try {
       setIsLoading(true);
       
+      // Get user session for user_id
+      const { data: userData } = await supabase.auth.getUser();
+      if (!userData?.user) throw new Error('User not authenticated');
+      const user_id = userData.user.id;
+      
       const { data, error } = await supabase
         .from('income')
         .insert([{
           amount: incomeData.amount,
           date: incomeData.date.toISOString(),
           description: incomeData.description,
-          category: incomeData.category
+          category: incomeData.category,
+          user_id
         }])
         .select()
         .single();
@@ -277,13 +289,19 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     try {
       setIsLoading(true);
       
+      // Get user session for user_id
+      const { data: userData } = await supabase.auth.getUser();
+      if (!userData?.user) throw new Error('User not authenticated');
+      const user_id = userData.user.id;
+      
       const { data, error } = await supabase
         .from('expenses')
         .insert([{
           amount: expense.amount,
           date: expense.date.toISOString(),
           description: expense.description,
-          category: expense.category
+          category: expense.category,
+          user_id
         }])
         .select()
         .single();
@@ -329,13 +347,19 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     try {
       setIsLoading(true);
       
+      // Get user session for user_id
+      const { data: userData } = await supabase.auth.getUser();
+      if (!userData?.user) throw new Error('User not authenticated');
+      const user_id = userData.user.id;
+      
       const { data, error } = await supabase
         .from('saving_goals')
         .insert([{
           title: goal.title,
           target_amount: goal.targetAmount,
           current_amount: goal.currentAmount,
-          deadline: goal.deadline ? goal.deadline.toISOString() : null
+          deadline: goal.deadline ? goal.deadline.toISOString() : null,
+          user_id
         }])
         .select()
         .single();
@@ -441,6 +465,11 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     try {
       setIsLoading(true);
       
+      // Get user session for user_id
+      const { data: userData } = await supabase.auth.getUser();
+      if (!userData?.user) throw new Error('User not authenticated');
+      const user_id = userData.user.id;
+      
       const { data, error } = await supabase
         .from('loans')
         .insert([{
@@ -449,7 +478,8 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
           remaining_amount: loan.remainingAmount,
           monthly_payment: loan.monthlyPayment,
           due_day: loan.dueDay,
-          next_payment_date: loan.nextPaymentDate.toISOString()
+          next_payment_date: loan.nextPaymentDate.toISOString(),
+          user_id
         }])
         .select()
         .single();
@@ -549,6 +579,11 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     try {
       setIsLoading(true);
       
+      // Get user session for user_id
+      const { data: userData } = await supabase.auth.getUser();
+      if (!userData?.user) throw new Error('User not authenticated');
+      const user_id = userData.user.id;
+      
       // First delete existing budget categories
       const { error: deleteError } = await supabase
         .from('budget_categories')
@@ -561,7 +596,8 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       const categoriesToInsert = categories.map(cat => ({
         category: cat.category,
         amount: cat.amount,
-        percentage: cat.percentage
+        percentage: cat.percentage,
+        user_id
       }));
       
       const { error: insertError } = await supabase
