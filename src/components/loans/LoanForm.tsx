@@ -203,7 +203,6 @@ const LoanForm = ({ onClose }: { onClose: () => void }) => {
                     }
                   }}
                   initialFocus
-                  className="p-3 pointer-events-auto"
                 />
               </PopoverContent>
             </Popover>

@@ -1,3 +1,4 @@
+
 import React, { useEffect, useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
@@ -7,19 +8,19 @@ import { useNavigate } from 'react-router-dom';
 import IncomeSetupForm from '@/components/auth/IncomeSetupForm';
 
 const Home = () => {
-  const { user, isLoading } = useAuth();
-  const { incomes, expenses } = useAppContext();
+  const { user, isLoading: authLoading } = useAuth();
+  const { incomes, expenses, loans, isLoading: dataLoading } = useAppContext();
   const navigate = useNavigate();
   const [spentPercentage, setSpentPercentage] = useState(0);
   
   useEffect(() => {
-    if (!isLoading && !user) {
+    if (!authLoading && !user) {
       navigate('/auth');
     }
-  }, [user, isLoading, navigate]);
+  }, [user, authLoading, navigate]);
   
   useEffect(() => {
-    if (incomes.length > 0 && expenses.length > 0) {
+    if (incomes && incomes.length > 0 && expenses && expenses.length > 0) {
       const totalIncome = incomes.reduce((sum, income) => sum + income.amount, 0);
       const totalSpent = expenses.reduce((sum, expense) => sum + expense.amount, 0);
       setSpentPercentage(Math.round((totalSpent / totalIncome) * 100));
@@ -28,7 +29,7 @@ const Home = () => {
     }
   }, [incomes, expenses]);
   
-  if (isLoading) {
+  if (authLoading || dataLoading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <div className="text-center">
@@ -42,13 +43,23 @@ const Home = () => {
     return null;
   }
   
-  if (incomes.length === 0) {
+  if (!incomes || incomes.length === 0) {
     return <IncomeSetupForm />;
   }
   
   const totalIncome = incomes.reduce((sum, income) => sum + income.amount, 0);
-  const totalSpent = expenses.reduce((sum, expense) => sum + expense.amount, 0);
+  const totalSpent = expenses ? expenses.reduce((sum, expense) => sum + expense.amount, 0) : 0;
   const remainingAmount = totalIncome - totalSpent;
+
+  // Format currency to INR
+  const formatCurrency = (amount: number) => {
+    return new Intl.NumberFormat('en-IN', {
+      style: 'currency',
+      currency: 'INR',
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 0,
+    }).format(amount);
+  };
   
   return (
     <div className="container max-w-md mx-auto py-8">
@@ -63,16 +74,22 @@ const Home = () => {
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <p className="text-muted-foreground">Income</p>
-                <p className="font-medium">₹{totalIncome}</p>
+                <p className="font-medium">{formatCurrency(totalIncome)}</p>
               </div>
               <div>
                 <p className="text-muted-foreground">Spent</p>
-                <p className="font-medium">₹{totalSpent}</p>
+                <p className="font-medium">{formatCurrency(totalSpent)}</p>
               </div>
               <div>
                 <p className="text-muted-foreground">Remaining</p>
-                <p className="font-medium">₹{remainingAmount}</p>
+                <p className="font-medium">{formatCurrency(remainingAmount)}</p>
               </div>
+              {loans && loans.length > 0 && (
+                <div>
+                  <p className="text-muted-foreground">Active Loans</p>
+                  <p className="font-medium">{loans.length}</p>
+                </div>
+              )}
             </div>
           </div>
           

@@ -44,7 +44,7 @@ const Loans = () => {
         </Dialog>
       </div>
       
-      {loans.length === 0 ? (
+      {!loans || loans.length === 0 ? (
         <div className="flex flex-col items-center justify-center py-12 text-center">
           <div className="rounded-full bg-muted p-6 mb-6">
             <div className="rounded-full bg-primary/20 p-4">

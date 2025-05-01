@@ -28,9 +28,9 @@ const LoanCard: React.FC<LoanCardProps> = ({ loan, onDelete }) => {
   
   // Format currency
   const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat('en-US', {
+    return new Intl.NumberFormat('en-IN', {
       style: 'currency',
-      currency: 'USD',
+      currency: 'INR',
       minimumFractionDigits: 0,
       maximumFractionDigits: 0,
     }).format(amount);
@@ -143,7 +143,7 @@ const LoanCard: React.FC<LoanCardProps> = ({ loan, onDelete }) => {
                 <Label htmlFor="amount">Payment Amount</Label>
                 <div className="relative">
                   <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
-                    <span className="text-gray-500">$</span>
+                    <span className="text-gray-500">₹</span>
                   </div>
                   <Input
                     id="amount"

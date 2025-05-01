@@ -1,15 +1,17 @@
+
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 
-interface Income {
+export interface Income {
   id: string;
   amount: number;
   date: Date;
   description?: string;
+  category?: string;
 }
 
-interface Expense {
+export interface Expense {
   id: string;
   amount: number;
   date: Date;
@@ -17,7 +19,7 @@ interface Expense {
   category: string;
 }
 
-interface SavingGoal {
+export interface SavingGoal {
   id: string;
   title: string;
   targetAmount: number;
@@ -25,16 +27,43 @@ interface SavingGoal {
   deadline?: Date;
 }
 
+export interface Loan {
+  id: string;
+  title: string;
+  totalAmount: number;
+  remainingAmount: number;
+  monthlyPayment: number;
+  dueDay: number;
+  nextPaymentDate: Date;
+}
+
+export type ExpenseCategory = 'Housing' | 'Food' | 'Transportation' | 'Entertainment' | 'Health' | 'Shopping' | 'Utilities' | 'Other';
+
+export const EXPENSE_CATEGORIES: ExpenseCategory[] = [
+  'Housing',
+  'Food',
+  'Transportation',
+  'Entertainment',
+  'Health',
+  'Shopping',
+  'Utilities',
+  'Other'
+];
+
 interface AppContextType {
   incomes: Income[];
   expenses: Expense[];
   savingGoals: SavingGoal[];
+  loans: Loan[];
   addIncome: (income: Omit<Income, "id">) => Promise<void>;
   setIncome: (incomeData: Omit<Income, "id">) => Promise<void>;
   addExpense: (expense: Omit<Expense, "id">) => Promise<void>;
   addSavingGoal: (goal: Omit<SavingGoal, "id">) => Promise<void>;
   updateSavingGoal: (goal: SavingGoal) => Promise<void>;
   deleteSavingGoal: (id: string) => Promise<void>;
+  addLoan: (loan: Omit<Loan, "id">) => Promise<void>;
+  updateLoanPayment: (loanId: string, paymentAmount: number) => Promise<void>;
+  deleteLoan: (id: string) => Promise<void>;
   logout: () => void;
   isLoading: boolean;
 }
@@ -45,6 +74,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   const [incomes, setIncomes] = useState<Income[]>([]);
   const [expenses, setExpenses] = useState<Expense[]>([]);
   const [savingGoals, setSavingGoals] = useState<SavingGoal[]>([]);
+  const [loans, setLoans] = useState<Loan[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   
   useEffect(() => {
@@ -52,7 +82,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       setIsLoading(true);
       try {
         const { data, error } = await supabase
-          .from('incomes')
+          .from('income')
           .select('*')
           .order('date', { ascending: false });
         
@@ -113,7 +143,10 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         if (data) {
           setSavingGoals(
             data.map((goal) => ({
-              ...goal,
+              id: goal.id,
+              title: goal.title,
+              targetAmount: goal.target_amount,
+              currentAmount: goal.current_amount,
               deadline: goal.deadline ? new Date(goal.deadline) : undefined
             }))
           );
@@ -126,9 +159,41 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       }
     };
     
+    const fetchLoans = async () => {
+      setIsLoading(true);
+      try {
+        const { data, error } = await supabase
+          .from('loans')
+          .select('*')
+          .order('due_day', { ascending: true });
+        
+        if (error) throw error;
+        
+        if (data) {
+          setLoans(
+            data.map((loan) => ({
+              id: loan.id,
+              title: loan.title,
+              totalAmount: loan.total_amount,
+              remainingAmount: loan.remaining_amount,
+              monthlyPayment: loan.monthly_payment,
+              dueDay: loan.due_day,
+              nextPaymentDate: new Date(loan.next_payment_date)
+            }))
+          );
+        }
+      } catch (error: any) {
+        console.error('Error fetching loans:', error);
+        toast.error(error.message || 'Failed to fetch loans');
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    
     fetchIncomes();
     fetchExpenses();
     fetchSavingGoals();
+    fetchLoans();
   }, []);
   
   const addIncome = async (income: Omit<Income, "id">) => {
@@ -136,14 +201,17 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       setIsLoading(true);
       
       const { data, error } = await supabase
-        .from('incomes')
+        .from('income')
         .insert([income])
         .select()
         .single();
       
       if (error) throw error;
       
-      setIncomes((prevIncomes) => [...prevIncomes, data]);
+      setIncomes((prevIncomes) => [...prevIncomes, {
+        ...data,
+        date: new Date(data.date)
+      }]);
       toast.success('Income added successfully!');
     } catch (error: any) {
       console.error('Error adding income:', error);
@@ -158,14 +226,22 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       setIsLoading(true);
       
       const { data, error } = await supabase
-        .from('incomes')
-        .insert([incomeData])
+        .from('income')
+        .insert([{
+          amount: incomeData.amount,
+          date: incomeData.date,
+          description: incomeData.description,
+          category: incomeData.category
+        }])
         .select()
         .single();
       
       if (error) throw error;
       
-      setIncomes((prevIncomes) => [...prevIncomes, data]);
+      setIncomes((prevIncomes) => [...prevIncomes, {
+        ...data,
+        date: new Date(data.date)
+      }]);
       
     } catch (error: any) {
       console.error('Error setting income:', error);
@@ -187,7 +263,10 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       
       if (error) throw error;
       
-      setExpenses((prevExpenses) => [...prevExpenses, data]);
+      setExpenses((prevExpenses) => [...prevExpenses, {
+        ...data,
+        date: new Date(data.date)
+      }]);
       toast.success('Expense added successfully!');
     } catch (error: any) {
       console.error('Error adding expense:', error);
@@ -203,13 +282,24 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       
       const { data, error } = await supabase
         .from('saving_goals')
-        .insert([goal])
+        .insert([{
+          title: goal.title,
+          target_amount: goal.targetAmount,
+          current_amount: goal.currentAmount,
+          deadline: goal.deadline
+        }])
         .select()
         .single();
       
       if (error) throw error;
       
-      setSavingGoals((prevGoals) => [...prevGoals, data]);
+      setSavingGoals((prevGoals) => [...prevGoals, {
+        id: data.id,
+        title: data.title,
+        targetAmount: data.target_amount,
+        currentAmount: data.current_amount,
+        deadline: data.deadline ? new Date(data.deadline) : undefined
+      }]);
       toast.success('Saving goal added successfully!');
     } catch (error: any) {
       console.error('Error adding saving goal:', error);
@@ -223,17 +313,20 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     try {
       setIsLoading(true);
       
-      const { data, error } = await supabase
+      const { error } = await supabase
         .from('saving_goals')
-        .update(goal)
-        .eq('id', goal.id)
-        .select()
-        .single();
+        .update({
+          title: goal.title,
+          target_amount: goal.targetAmount,
+          current_amount: goal.currentAmount,
+          deadline: goal.deadline
+        })
+        .eq('id', goal.id);
       
       if (error) throw error;
       
       setSavingGoals((prevGoals) =>
-        prevGoals.map((g) => (g.id === goal.id ? data : g))
+        prevGoals.map((g) => (g.id === goal.id ? goal : g))
       );
       toast.success('Saving goal updated successfully!');
     } catch (error: any) {
@@ -265,6 +358,114 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
+  const addLoan = async (loan: Omit<Loan, "id">) => {
+    try {
+      setIsLoading(true);
+      
+      const { data, error } = await supabase
+        .from('loans')
+        .insert([{
+          title: loan.title,
+          total_amount: loan.totalAmount,
+          remaining_amount: loan.remainingAmount,
+          monthly_payment: loan.monthlyPayment,
+          due_day: loan.dueDay,
+          next_payment_date: loan.nextPaymentDate
+        }])
+        .select()
+        .single();
+      
+      if (error) throw error;
+      
+      setLoans((prevLoans) => [...prevLoans, {
+        id: data.id,
+        title: data.title,
+        totalAmount: data.total_amount,
+        remainingAmount: data.remaining_amount,
+        monthlyPayment: data.monthly_payment,
+        dueDay: data.due_day,
+        nextPaymentDate: new Date(data.next_payment_date)
+      }]);
+      toast.success('Loan added successfully!');
+    } catch (error: any) {
+      console.error('Error adding loan:', error);
+      toast.error(error.message || 'Failed to add loan');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const updateLoanPayment = async (loanId: string, paymentAmount: number) => {
+    try {
+      setIsLoading(true);
+      
+      // Find the current loan
+      const loan = loans.find(loan => loan.id === loanId);
+      
+      if (!loan) {
+        throw new Error('Loan not found');
+      }
+      
+      // Calculate new remaining amount
+      const newRemainingAmount = Math.max(0, loan.remainingAmount - paymentAmount);
+      
+      // Calculate next payment date (1 month from now)
+      const nextPaymentDate = new Date();
+      nextPaymentDate.setMonth(nextPaymentDate.getMonth() + 1);
+      nextPaymentDate.setDate(loan.dueDay);
+      
+      const { error } = await supabase
+        .from('loans')
+        .update({
+          remaining_amount: newRemainingAmount,
+          next_payment_date: nextPaymentDate
+        })
+        .eq('id', loanId);
+      
+      if (error) throw error;
+      
+      setLoans(prevLoans => 
+        prevLoans.map(loan => 
+          loan.id === loanId
+            ? {
+                ...loan,
+                remainingAmount: newRemainingAmount,
+                nextPaymentDate
+              }
+            : loan
+        )
+      );
+      
+      toast.success(`Payment of ₹${paymentAmount} made successfully!`);
+    } catch (error: any) {
+      console.error('Error updating loan payment:', error);
+      toast.error(error.message || 'Failed to update loan payment');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const deleteLoan = async (id: string) => {
+    try {
+      setIsLoading(true);
+      
+      const { error } = await supabase
+        .from('loans')
+        .delete()
+        .eq('id', id);
+      
+      if (error) throw error;
+      
+      setLoans((prevLoans) => prevLoans.filter((loan) => loan.id !== id));
+      toast.success('Loan deleted successfully!');
+    } catch (error: any) {
+      console.error('Error deleting loan:', error);
+      toast.error(error.message || 'Failed to delete loan');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   const logout = async () => {
     try {
       setIsLoading(true);
@@ -273,6 +474,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       setIncomes([]);
       setExpenses([]);
       setSavingGoals([]);
+      setLoans([]);
       toast.success('Logged out successfully!');
     } catch (error: any) {
       console.error('Error logging out:', error);
@@ -288,12 +490,16 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         incomes,
         expenses,
         savingGoals,
+        loans,
         addIncome,
         setIncome,
         addExpense,
         addSavingGoal,
         updateSavingGoal,
         deleteSavingGoal,
+        addLoan,
+        updateLoanPayment,
+        deleteLoan,
         logout,
         isLoading,
       }}
