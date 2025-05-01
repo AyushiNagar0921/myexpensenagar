@@ -37,11 +37,13 @@ const IncomeForm = ({ onSuccess }: IncomeFormProps) => {
   const { user } = useAuth();
   const navigate = useNavigate();
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [profileReady, setProfileReady] = useState(false);
   
   useEffect(() => {
     // Ensure profile exists when component mounts
     const checkProfile = async () => {
-      await ensureProfileExists();
+      const exists = await ensureProfileExists();
+      setProfileReady(exists);
     };
     checkProfile();
   }, [ensureProfileExists]);
@@ -62,11 +64,16 @@ const IncomeForm = ({ onSuccess }: IncomeFormProps) => {
       return;
     }
     
+    if (!profileReady) {
+      const exists = await ensureProfileExists();
+      if (!exists) {
+        toast.error('Could not create your profile. Please try again.');
+        return;
+      }
+    }
+    
     setIsSubmitting(true);
     try {
-      // Ensure profile exists before adding income
-      await ensureProfileExists();
-      
       await addIncome({
         amount: values.amount,
         date: new Date(),

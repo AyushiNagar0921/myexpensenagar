@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
@@ -26,12 +26,22 @@ const categories: {value: ExpenseCategory, label: string}[] = [
 
 const ExpenseForm = () => {
   const navigate = useNavigate();
-  const { addExpense } = useAppContext();
+  const { addExpense, ensureProfileExists } = useAppContext();
   const [amount, setAmount] = useState('');
   const [category, setCategory] = useState<ExpenseCategory>('Food');
   const [description, setDescription] = useState('');
   const [date, setDate] = useState<Date>(new Date());
   const [isLoading, setIsLoading] = useState(false);
+  const [profileReady, setProfileReady] = useState(false);
+  
+  useEffect(() => {
+    // Ensure profile exists when component mounts
+    const checkProfile = async () => {
+      const exists = await ensureProfileExists();
+      setProfileReady(exists);
+    };
+    checkProfile();
+  }, [ensureProfileExists]);
   
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -54,6 +64,15 @@ const ExpenseForm = () => {
     setIsLoading(true);
     
     try {
+      // Ensure profile exists before proceeding
+      if (!profileReady) {
+        const exists = await ensureProfileExists();
+        if (!exists) {
+          toast.error('Failed to create user profile');
+          return;
+        }
+      }
+      
       // Add the new expense
       await addExpense({
         amount: parseFloat(amount),
@@ -69,8 +88,9 @@ const ExpenseForm = () => {
       setDate(new Date());
       
       navigate('/');
-    } catch (error) {
+    } catch (error: any) {
       console.error('Failed to add expense:', error);
+      toast.error(error.message || 'Failed to add expense');
     } finally {
       setIsLoading(false);
     }

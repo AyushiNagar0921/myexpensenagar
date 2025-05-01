@@ -1,5 +1,5 @@
 
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import IncomeForm from '@/components/income/IncomeForm';
 import { useAppContext } from '@/contexts/AppContext';
 import { useNavigate } from 'react-router-dom';
@@ -8,17 +8,19 @@ import { Skeleton } from "@/components/ui/skeleton";
 const AddIncome = () => {
   const { incomes, isLoading, ensureProfileExists } = useAppContext();
   const navigate = useNavigate();
+  const [profileChecked, setProfileChecked] = useState(false);
 
   useEffect(() => {
     // Ensure profile exists when component mounts
     const checkProfile = async () => {
-      await ensureProfileExists();
+      const exists = await ensureProfileExists();
+      setProfileChecked(exists);
     };
     checkProfile();
   }, [ensureProfileExists]);
 
   // If data is loading, show a skeleton
-  if (isLoading) {
+  if (isLoading && !profileChecked) {
     return (
       <div className="container py-8 space-y-6">
         <div className="flex items-center justify-between">
