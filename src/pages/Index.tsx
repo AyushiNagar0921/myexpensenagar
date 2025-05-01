@@ -5,10 +5,10 @@ import { useAuth } from '@/contexts/AuthContext';
 
 const Index = () => {
   const navigate = useNavigate();
-  const { user, loading } = useAuth();
+  const { user, isLoading } = useAuth();
   
   useEffect(() => {
-    if (!loading) {
+    if (!isLoading) {
       // Redirect to home page if authenticated, otherwise to auth page
       if (user) {
         navigate('/');
@@ -16,7 +16,7 @@ const Index = () => {
         navigate('/auth');
       }
     }
-  }, [navigate, user, loading]);
+  }, [navigate, user, isLoading]);
   
   return (
     <div className="flex items-center justify-center min-h-screen">
