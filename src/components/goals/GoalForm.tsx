@@ -1,5 +1,4 @@
-
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -13,13 +12,21 @@ import { useAppContext } from '@/contexts/AppContext';
 import { toast } from "sonner";
 
 const GoalForm = ({ onClose }: { onClose: () => void }) => {
-  const { addSavingGoal } = useAppContext();
+  const { addSavingGoal, ensureProfileExists } = useAppContext();
   const [title, setTitle] = useState('');
   const [targetAmount, setTargetAmount] = useState('');
   const [currentAmount, setCurrentAmount] = useState('');
   const [deadline, setDeadline] = useState<Date | undefined>(undefined);
   const [isLoading, setIsLoading] = useState(false);
   const [isCalendarOpen, setIsCalendarOpen] = useState(false);
+  
+  useEffect(() => {
+    // Ensure profile exists when component mounts
+    const checkProfile = async () => {
+      await ensureProfileExists();
+    };
+    checkProfile();
+  }, [ensureProfileExists]);
   
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -45,6 +52,9 @@ const GoalForm = ({ onClose }: { onClose: () => void }) => {
     setIsLoading(true);
     
     try {
+      // Ensure profile exists before adding goal
+      await ensureProfileExists();
+      
       // Add the new saving goal
       await addSavingGoal({
         title,

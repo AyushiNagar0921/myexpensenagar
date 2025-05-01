@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
@@ -28,11 +28,23 @@ const categoryOptions = [
   { label: 'Other', value: 'other' },
 ];
 
-const IncomeForm = () => {
-  const { addIncome, isLoading } = useAppContext();
+interface IncomeFormProps {
+  onSuccess?: () => void;
+}
+
+const IncomeForm = ({ onSuccess }: IncomeFormProps) => {
+  const { addIncome, isLoading, ensureProfileExists } = useAppContext();
   const { user } = useAuth();
   const navigate = useNavigate();
   const [isSubmitting, setIsSubmitting] = useState(false);
+  
+  useEffect(() => {
+    // Ensure profile exists when component mounts
+    const checkProfile = async () => {
+      await ensureProfileExists();
+    };
+    checkProfile();
+  }, [ensureProfileExists]);
   
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -52,6 +64,9 @@ const IncomeForm = () => {
     
     setIsSubmitting(true);
     try {
+      // Ensure profile exists before adding income
+      await ensureProfileExists();
+      
       await addIncome({
         amount: values.amount,
         date: new Date(),
@@ -61,7 +76,11 @@ const IncomeForm = () => {
       
       form.reset();
       toast.success('Income added successfully!');
-      navigate('/');
+      
+      // Call onSuccess callback if provided
+      if (onSuccess) {
+        onSuccess();
+      }
     } catch (error: any) {
       console.error('Error adding income:', error);
       toast.error(error.message || 'Failed to add income');

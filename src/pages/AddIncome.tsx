@@ -6,8 +6,16 @@ import { useNavigate } from 'react-router-dom';
 import { Skeleton } from "@/components/ui/skeleton";
 
 const AddIncome = () => {
-  const { incomes, isLoading } = useAppContext();
+  const { incomes, isLoading, ensureProfileExists } = useAppContext();
   const navigate = useNavigate();
+
+  useEffect(() => {
+    // Ensure profile exists when component mounts
+    const checkProfile = async () => {
+      await ensureProfileExists();
+    };
+    checkProfile();
+  }, [ensureProfileExists]);
 
   // If data is loading, show a skeleton
   if (isLoading) {
@@ -24,7 +32,7 @@ const AddIncome = () => {
   return (
     <div className="container max-w-md mx-auto py-8">
       <h2 className="text-3xl font-bold mb-6">Add Income</h2>
-      <IncomeForm />
+      <IncomeForm onSuccess={() => navigate('/')} />
     </div>
   );
 };

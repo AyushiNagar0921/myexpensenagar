@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog";
 import { Plus } from "lucide-react";
@@ -9,8 +9,16 @@ import GoalForm from '@/components/goals/GoalForm';
 import { Skeleton } from "@/components/ui/skeleton";
 
 const SavingGoals = () => {
-  const { savingGoals, deleteSavingGoal, isLoading } = useAppContext();
+  const { savingGoals, deleteSavingGoal, isLoading, ensureProfileExists } = useAppContext();
   const [isAddingGoal, setIsAddingGoal] = useState(false);
+  
+  useEffect(() => {
+    // Ensure profile exists when component mounts
+    const checkProfile = async () => {
+      await ensureProfileExists();
+    };
+    checkProfile();
+  }, [ensureProfileExists]);
   
   if (isLoading) {
     return (

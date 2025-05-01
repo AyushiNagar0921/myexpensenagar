@@ -1,5 +1,4 @@
-
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -8,12 +7,11 @@ import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { format } from "date-fns";
 import { CalendarIcon } from "lucide-react";
-import { cn } from "@/lib/utils";
 import { useAppContext } from '@/contexts/AppContext';
 import { toast } from "sonner";
 
 const LoanForm = ({ onClose }: { onClose: () => void }) => {
-  const { addLoan } = useAppContext();
+  const { addLoan, ensureProfileExists } = useAppContext();
   const [title, setTitle] = useState('');
   const [totalAmount, setTotalAmount] = useState('');
   const [remainingAmount, setRemainingAmount] = useState('');
@@ -22,6 +20,14 @@ const LoanForm = ({ onClose }: { onClose: () => void }) => {
   const [nextPaymentDate, setNextPaymentDate] = useState<Date>(new Date());
   const [isLoading, setIsLoading] = useState(false);
   const [isCalendarOpen, setIsCalendarOpen] = useState(false);
+  
+  useEffect(() => {
+    // Ensure profile exists when component mounts
+    const checkProfile = async () => {
+      await ensureProfileExists();
+    };
+    checkProfile();
+  }, [ensureProfileExists]);
   
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -64,6 +70,9 @@ const LoanForm = ({ onClose }: { onClose: () => void }) => {
     setIsLoading(true);
     
     try {
+      // Ensure profile exists before adding loan
+      await ensureProfileExists();
+      
       // Add the new loan
       await addLoan({
         title,
@@ -88,6 +97,7 @@ const LoanForm = ({ onClose }: { onClose: () => void }) => {
       setIsLoading(false);
     }
   };
+  
   
   return (
     <Card>

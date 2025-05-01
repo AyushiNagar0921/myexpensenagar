@@ -1,3 +1,4 @@
+
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
@@ -75,6 +76,8 @@ interface AppContextType {
   saveBudgetCategories: (categories: BudgetCategory[]) => Promise<void>;
   logout: () => void;
   isLoading: boolean;
+  profileExists: boolean;
+  ensureProfileExists: () => Promise<void>;
 }
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
@@ -85,6 +88,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   const [savingGoals, setSavingGoals] = useState<SavingGoal[]>([]);
   const [loans, setLoans] = useState<Loan[]>([]);
   const [isLoading, setIsLoading] = useState(false);
+  const [profileExists, setProfileExists] = useState(false);
   
   // Calculate remaining balance
   const income = incomes.length > 0 ? incomes[0] : undefined;
@@ -92,162 +96,179 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   const totalSpent = expenses.reduce((sum, expense) => sum + expense.amount, 0);
   const remainingBalance = totalIncome - totalSpent;
   
+  // Ensure user profile exists
+  const ensureProfileExists = async () => {
+    try {
+      // Get current user
+      const { data: userData } = await supabase.auth.getUser();
+      if (!userData?.user) {
+        console.error('No authenticated user found');
+        return false;
+      }
+      
+      // Check if profile exists
+      const { data: profileData, error: profileError } = await supabase
+        .from('profiles')
+        .select('id')
+        .eq('id', userData.user.id)
+        .single();
+        
+      // If profile doesn't exist, create it
+      if (profileError && profileError.code === 'PGRST116') {
+        const { error: insertError } = await supabase
+          .from('profiles')
+          .insert([{ id: userData.user.id }]);
+          
+        if (insertError) {
+          console.error('Error creating user profile:', insertError);
+          return false;
+        }
+        setProfileExists(true);
+        return true;
+      }
+      
+      setProfileExists(!!profileData);
+      return !!profileData;
+    } catch (error) {
+      console.error('Error checking/creating user profile:', error);
+      return false;
+    }
+  };
+  
   useEffect(() => {
     // First ensure the user profile exists
-    const createUserProfileIfNeeded = async () => {
-      try {
-        // Get current user
-        const { data: userData } = await supabase.auth.getUser();
-        if (!userData?.user) return;
-        
-        // Check if profile exists
-        const { data: profileData, error: profileError } = await supabase
-          .from('profiles')
-          .select('*')
-          .eq('id', userData.user.id)
-          .single();
-          
-        // If profile doesn't exist, create it
-        if (profileError && profileError.code === 'PGRST116') {
-          const { error: insertError } = await supabase
-            .from('profiles')
-            .insert({ id: userData.user.id });
-            
-          if (insertError) {
-            console.error('Error creating user profile:', insertError);
-            return;
-          }
-        }
-      } catch (error) {
-        console.error('Error checking/creating user profile:', error);
-      }
+    const checkProfile = async () => {
+      await ensureProfileExists();
+      
+      // Then fetch data
+      fetchIncomes();
+      fetchExpenses();
+      fetchSavingGoals();
+      fetchLoans();
     };
     
-    createUserProfileIfNeeded();
-    
-    // Then fetch data
-    const fetchIncomes = async () => {
-      setIsLoading(true);
-      try {
-        const { data, error } = await supabase
-          .from('income')
-          .select('*')
-          .order('date', { ascending: false });
-        
-        if (error) throw error;
-        
-        if (data) {
-          setIncomes(
-            data.map((income) => ({
-              ...income,
-              date: new Date(income.date)
-            }))
-          );
-        }
-      } catch (error: any) {
-        console.error('Error fetching incomes:', error);
-        toast.error(error.message || 'Failed to fetch incomes');
-      } finally {
-        setIsLoading(false);
-      }
-    };
-    
-    const fetchExpenses = async () => {
-      setIsLoading(true);
-      try {
-        const { data, error } = await supabase
-          .from('expenses')
-          .select('*')
-          .order('date', { ascending: false });
-        
-        if (error) throw error;
-        
-        if (data) {
-          setExpenses(
-            data.map((expense) => ({
-              ...expense,
-              date: new Date(expense.date),
-              category: expense.category as ExpenseCategory
-            }))
-          );
-        }
-      } catch (error: any) {
-        console.error('Error fetching expenses:', error);
-        toast.error(error.message || 'Failed to fetch expenses');
-      } finally {
-        setIsLoading(false);
-      }
-    };
-    
-    const fetchSavingGoals = async () => {
-      setIsLoading(true);
-      try {
-        const { data, error } = await supabase
-          .from('saving_goals')
-          .select('*')
-          .order('deadline', { ascending: true });
-        
-        if (error) throw error;
-        
-        if (data) {
-          setSavingGoals(
-            data.map((goal) => ({
-              id: goal.id,
-              title: goal.title,
-              targetAmount: goal.target_amount,
-              currentAmount: goal.current_amount,
-              deadline: goal.deadline ? new Date(goal.deadline) : undefined
-            }))
-          );
-        }
-      } catch (error: any) {
-        console.error('Error fetching saving goals:', error);
-        toast.error(error.message || 'Failed to fetch saving goals');
-      } finally {
-        setIsLoading(false);
-      }
-    };
-    
-    const fetchLoans = async () => {
-      setIsLoading(true);
-      try {
-        const { data, error } = await supabase
-          .from('loans')
-          .select('*')
-          .order('due_day', { ascending: true });
-        
-        if (error) throw error;
-        
-        if (data) {
-          setLoans(
-            data.map((loan) => ({
-              id: loan.id,
-              title: loan.title,
-              totalAmount: loan.total_amount,
-              remainingAmount: loan.remaining_amount,
-              monthlyPayment: loan.monthly_payment,
-              dueDay: loan.due_day,
-              nextPaymentDate: new Date(loan.next_payment_date)
-            }))
-          );
-        }
-      } catch (error: any) {
-        console.error('Error fetching loans:', error);
-        toast.error(error.message || 'Failed to fetch loans');
-      } finally {
-        setIsLoading(false);
-      }
-    };
-    
-    fetchIncomes();
-    fetchExpenses();
-    fetchSavingGoals();
-    fetchLoans();
+    checkProfile();
   }, []);
+  
+  const fetchIncomes = async () => {
+    setIsLoading(true);
+    try {
+      const { data, error } = await supabase
+        .from('income')
+        .select('*')
+        .order('date', { ascending: false });
+      
+      if (error) throw error;
+      
+      if (data) {
+        setIncomes(
+          data.map((income) => ({
+            ...income,
+            date: new Date(income.date)
+          }))
+        );
+      }
+    } catch (error: any) {
+      console.error('Error fetching incomes:', error);
+      toast.error(error.message || 'Failed to fetch incomes');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+  
+  const fetchExpenses = async () => {
+    setIsLoading(true);
+    try {
+      const { data, error } = await supabase
+        .from('expenses')
+        .select('*')
+        .order('date', { ascending: false });
+      
+      if (error) throw error;
+      
+      if (data) {
+        setExpenses(
+          data.map((expense) => ({
+            ...expense,
+            date: new Date(expense.date),
+            category: expense.category as ExpenseCategory
+          }))
+        );
+      }
+    } catch (error: any) {
+      console.error('Error fetching expenses:', error);
+      toast.error(error.message || 'Failed to fetch expenses');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+  
+  const fetchSavingGoals = async () => {
+    setIsLoading(true);
+    try {
+      const { data, error } = await supabase
+        .from('saving_goals')
+        .select('*')
+        .order('deadline', { ascending: true });
+      
+      if (error) throw error;
+      
+      if (data) {
+        setSavingGoals(
+          data.map((goal) => ({
+            id: goal.id,
+            title: goal.title,
+            targetAmount: goal.target_amount,
+            currentAmount: goal.current_amount,
+            deadline: goal.deadline ? new Date(goal.deadline) : undefined
+          }))
+        );
+      }
+    } catch (error: any) {
+      console.error('Error fetching saving goals:', error);
+      toast.error(error.message || 'Failed to fetch saving goals');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+  
+  const fetchLoans = async () => {
+    setIsLoading(true);
+    try {
+      const { data, error } = await supabase
+        .from('loans')
+        .select('*')
+        .order('due_day', { ascending: true });
+      
+      if (error) throw error;
+      
+      if (data) {
+        setLoans(
+          data.map((loan) => ({
+            id: loan.id,
+            title: loan.title,
+            totalAmount: loan.total_amount,
+            remainingAmount: loan.remaining_amount,
+            monthlyPayment: loan.monthly_payment,
+            dueDay: loan.due_day,
+            nextPaymentDate: new Date(loan.next_payment_date)
+          }))
+        );
+      }
+    } catch (error: any) {
+      console.error('Error fetching loans:', error);
+      toast.error(error.message || 'Failed to fetch loans');
+    } finally {
+      setIsLoading(false);
+    }
+  };
   
   const addIncome = async (income: Omit<Income, "id">) => {
     try {
       setIsLoading(true);
+      
+      // Ensure profile exists before proceeding
+      await ensureProfileExists();
       
       // Get user session for user_id
       const { data: userData } = await supabase.auth.getUser();
@@ -256,13 +277,13 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       
       const { data, error } = await supabase
         .from('income')
-        .insert([{
+        .insert({
           amount: income.amount,
           date: income.date.toISOString(),
           description: income.description,
           category: income.category,
           user_id
-        }])
+        })
         .select()
         .single();
       
@@ -276,6 +297,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     } catch (error: any) {
       console.error('Error adding income:', error);
       toast.error(error.message || 'Failed to add income');
+      throw error;
     } finally {
       setIsLoading(false);
     }
@@ -285,6 +307,9 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     try {
       setIsLoading(true);
       
+      // Ensure profile exists before proceeding
+      await ensureProfileExists();
+      
       // Get user session for user_id
       const { data: userData } = await supabase.auth.getUser();
       if (!userData?.user) throw new Error('User not authenticated');
@@ -292,13 +317,13 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       
       const { data, error } = await supabase
         .from('income')
-        .insert([{
+        .insert({
           amount: incomeData.amount,
           date: incomeData.date.toISOString(),
           description: incomeData.description,
           category: incomeData.category,
           user_id
-        }])
+        })
         .select()
         .single();
       
@@ -312,6 +337,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     } catch (error: any) {
       console.error('Error setting income:', error);
       toast.error(error.message || 'Failed to set income');
+      throw error;
     } finally {
       setIsLoading(false);
     }
@@ -321,6 +347,9 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     try {
       setIsLoading(true);
       
+      // Ensure profile exists before proceeding
+      await ensureProfileExists();
+      
       // Get user session for user_id
       const { data: userData } = await supabase.auth.getUser();
       if (!userData?.user) throw new Error('User not authenticated');
@@ -328,13 +357,13 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       
       const { data, error } = await supabase
         .from('expenses')
-        .insert([{
+        .insert({
           amount: expense.amount,
           date: expense.date.toISOString(),
           description: expense.description,
           category: expense.category,
           user_id
-        }])
+        })
         .select()
         .single();
       
@@ -349,6 +378,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     } catch (error: any) {
       console.error('Error adding expense:', error);
       toast.error(error.message || 'Failed to add expense');
+      throw error;
     } finally {
       setIsLoading(false);
     }
@@ -379,6 +409,9 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     try {
       setIsLoading(true);
       
+      // Ensure profile exists before proceeding
+      await ensureProfileExists();
+      
       // Get user session for user_id
       const { data: userData } = await supabase.auth.getUser();
       if (!userData?.user) throw new Error('User not authenticated');
@@ -386,13 +419,13 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       
       const { data, error } = await supabase
         .from('saving_goals')
-        .insert([{
+        .insert({
           title: goal.title,
           target_amount: goal.targetAmount,
           current_amount: goal.currentAmount,
           deadline: goal.deadline ? goal.deadline.toISOString() : null,
           user_id
-        }])
+        })
         .select()
         .single();
       
@@ -409,6 +442,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     } catch (error: any) {
       console.error('Error adding saving goal:', error);
       toast.error(error.message || 'Failed to add saving goal');
+      throw error;
     } finally {
       setIsLoading(false);
     }
@@ -497,6 +531,9 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     try {
       setIsLoading(true);
       
+      // Ensure profile exists before proceeding
+      await ensureProfileExists();
+      
       // Get user session for user_id
       const { data: userData } = await supabase.auth.getUser();
       if (!userData?.user) throw new Error('User not authenticated');
@@ -504,7 +541,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       
       const { data, error } = await supabase
         .from('loans')
-        .insert([{
+        .insert({
           title: loan.title,
           total_amount: loan.totalAmount,
           remaining_amount: loan.remainingAmount,
@@ -512,7 +549,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
           due_day: loan.dueDay,
           next_payment_date: loan.nextPaymentDate.toISOString(),
           user_id
-        }])
+        })
         .select()
         .single();
       
@@ -531,6 +568,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     } catch (error: any) {
       console.error('Error adding loan:', error);
       toast.error(error.message || 'Failed to add loan');
+      throw error;
     } finally {
       setIsLoading(false);
     }
@@ -611,6 +649,9 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     try {
       setIsLoading(true);
       
+      // Ensure profile exists before proceeding
+      await ensureProfileExists();
+      
       // Get user session for user_id
       const { data: userData } = await supabase.auth.getUser();
       if (!userData?.user) throw new Error('User not authenticated');
@@ -620,7 +661,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       const { error: deleteError } = await supabase
         .from('budget_categories')
         .delete()
-        .neq('id', '00000000-0000-0000-0000-000000000000'); // Delete all
+        .eq('user_id', user_id);
       
       if (deleteError) throw deleteError;
       
@@ -642,6 +683,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     } catch (error: any) {
       console.error('Error saving budget categories:', error);
       toast.error(error.message || 'Failed to save budget categories');
+      throw error;
     } finally {
       setIsLoading(false);
     }
@@ -688,6 +730,8 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         saveBudgetCategories,
         logout,
         isLoading,
+        profileExists,
+        ensureProfileExists,
       }}
     >
       {children}
