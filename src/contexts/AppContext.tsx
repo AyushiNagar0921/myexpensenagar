@@ -134,7 +134,8 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
           setExpenses(
             data.map((expense) => ({
               ...expense,
-              date: new Date(expense.date)
+              date: new Date(expense.date),
+              category: expense.category as ExpenseCategory
             }))
           );
         }
@@ -220,7 +221,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         .from('income')
         .insert([{
           amount: income.amount,
-          date: income.date,
+          date: income.date.toISOString(),
           description: income.description,
           category: income.category
         }])
@@ -250,7 +251,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         .from('income')
         .insert([{
           amount: incomeData.amount,
-          date: incomeData.date,
+          date: incomeData.date.toISOString(),
           description: incomeData.description,
           category: incomeData.category
         }])
@@ -278,7 +279,12 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       
       const { data, error } = await supabase
         .from('expenses')
-        .insert([expense])
+        .insert([{
+          amount: expense.amount,
+          date: expense.date.toISOString(),
+          description: expense.description,
+          category: expense.category
+        }])
         .select()
         .single();
       
@@ -286,7 +292,8 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       
       setExpenses((prevExpenses) => [...prevExpenses, {
         ...data,
-        date: new Date(data.date)
+        date: new Date(data.date),
+        category: data.category as ExpenseCategory
       }]);
       toast.success('Expense added successfully!');
     } catch (error: any) {
@@ -328,7 +335,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
           title: goal.title,
           target_amount: goal.targetAmount,
           current_amount: goal.currentAmount,
-          deadline: goal.deadline
+          deadline: goal.deadline ? goal.deadline.toISOString() : null
         }])
         .select()
         .single();
@@ -361,7 +368,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
           title: goal.title,
           target_amount: goal.targetAmount,
           current_amount: goal.currentAmount,
-          deadline: goal.deadline
+          deadline: goal.deadline ? goal.deadline.toISOString() : null
         })
         .eq('id', goal.id);
       
@@ -442,7 +449,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
           remaining_amount: loan.remainingAmount,
           monthly_payment: loan.monthlyPayment,
           due_day: loan.dueDay,
-          next_payment_date: loan.nextPaymentDate
+          next_payment_date: loan.nextPaymentDate.toISOString()
         }])
         .select()
         .single();
@@ -490,7 +497,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         .from('loans')
         .update({
           remaining_amount: newRemainingAmount,
-          next_payment_date: nextPaymentDate
+          next_payment_date: nextPaymentDate.toISOString()
         })
         .eq('id', loanId);
       

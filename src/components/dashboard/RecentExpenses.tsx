@@ -18,6 +18,8 @@ const getCategoryIcon = (category: ExpenseCategory) => {
       return <div className="bg-category-entertainment/20 p-2 rounded-full"><div className="h-2 w-2 bg-category-entertainment rounded-full"></div></div>;
     case 'Health':
       return <div className="bg-category-health/20 p-2 rounded-full"><div className="h-2 w-2 bg-category-health rounded-full"></div></div>;
+    case 'Other':
+      return <div className="bg-category-other/20 p-2 rounded-full"><div className="h-2 w-2 bg-category-other rounded-full"></div></div>;
     default:
       return <div className="bg-category-other/20 p-2 rounded-full"><div className="h-2 w-2 bg-category-other rounded-full"></div></div>;
   }

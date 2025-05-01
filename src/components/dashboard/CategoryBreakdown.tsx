@@ -7,13 +7,13 @@ import { PieChart, Pie, ResponsiveContainer, Cell, Tooltip, Legend } from 'recha
 
 // Define colors for each expense category
 const CATEGORY_COLORS: Record<ExpenseCategory, string> = {
-  food: '#10B981', // green
-  shopping: '#6366F1', // indigo 
-  travel: '#F59E0B', // amber
-  bills: '#EF4444', // red
-  entertainment: '#8B5CF6', // purple
-  health: '#06B6D4', // sky
-  other: '#6B7280', // gray
+  Food: '#10B981', // green
+  Shopping: '#6366F1', // indigo 
+  Transportation: '#F59E0B', // amber
+  Utilities: '#EF4444', // red
+  Entertainment: '#8B5CF6', // purple
+  Health: '#06B6D4', // sky
+  Other: '#6B7280', // gray
 };
 
 const CustomTooltip = ({ active, payload }: any) => {
@@ -81,7 +81,7 @@ const CategoryBreakdown = () => {
                   {chartData.map((entry, index) => (
                     <Cell 
                       key={`cell-${index}`} 
-                      fill={CATEGORY_COLORS[entry.name.toLowerCase() as ExpenseCategory] || CATEGORY_COLORS.other} 
+                      fill={CATEGORY_COLORS[entry.name as ExpenseCategory] || CATEGORY_COLORS.Other} 
                     />
                   ))}
                 </Pie>
