@@ -6,12 +6,14 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useAppContext } from '@/contexts/AppContext';
 import { useNavigate } from 'react-router-dom';
 import IncomeSetupForm from '@/components/auth/IncomeSetupForm';
+import BudgetSetupPrompt from '@/components/budget/BudgetSetupPrompt';
 
 const Home = () => {
   const { user, isLoading: authLoading } = useAuth();
   const { incomes, expenses, loans, isLoading: dataLoading } = useAppContext();
   const navigate = useNavigate();
   const [spentPercentage, setSpentPercentage] = useState(0);
+  const [showBudgetPrompt, setShowBudgetPrompt] = useState(false);
   
   useEffect(() => {
     if (!authLoading && !user) {
@@ -29,6 +31,55 @@ const Home = () => {
     }
   }, [incomes, expenses]);
   
+  // Check if the budget prompt should be shown based on user preferences
+  useEffect(() => {
+    if (incomes && incomes.length > 0) {
+      const lastPromptDate = localStorage.getItem('lastBudgetPromptDate');
+      const schedulePreference = localStorage.getItem('budgetSetupSchedule') || 'never';
+      
+      if (schedulePreference === 'never') {
+        setShowBudgetPrompt(false);
+        return;
+      }
+      
+      if (!lastPromptDate) {
+        // First time, show the prompt
+        setShowBudgetPrompt(true);
+        return;
+      }
+      
+      const today = new Date();
+      const lastDate = new Date(lastPromptDate);
+      
+      if (schedulePreference === 'daily') {
+        // Show daily if last prompt was yesterday or earlier
+        if (today.getDate() !== lastDate.getDate() || 
+            today.getMonth() !== lastDate.getMonth() || 
+            today.getFullYear() !== lastDate.getFullYear()) {
+          setShowBudgetPrompt(true);
+        }
+      } else if (schedulePreference === 'weekly') {
+        // Show weekly if it's been 7 or more days
+        const diffTime = Math.abs(today.getTime() - lastDate.getTime());
+        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+        if (diffDays >= 7) {
+          setShowBudgetPrompt(true);
+        }
+      } else if (schedulePreference === 'monthly') {
+        // Show monthly if it's been a month or more
+        if (today.getMonth() !== lastDate.getMonth() || 
+            today.getFullYear() !== lastDate.getFullYear()) {
+          setShowBudgetPrompt(true);
+        }
+      }
+    }
+  }, [incomes]);
+  
+  const handleBudgetPromptComplete = () => {
+    setShowBudgetPrompt(false);
+    localStorage.setItem('lastBudgetPromptDate', new Date().toISOString());
+  };
+  
   if (authLoading || dataLoading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
@@ -45,6 +96,10 @@ const Home = () => {
   
   if (!incomes || incomes.length === 0) {
     return <IncomeSetupForm />;
+  }
+
+  if (showBudgetPrompt) {
+    return <BudgetSetupPrompt onComplete={handleBudgetPromptComplete} />;
   }
   
   const totalIncome = incomes.reduce((sum, income) => sum + income.amount, 0);

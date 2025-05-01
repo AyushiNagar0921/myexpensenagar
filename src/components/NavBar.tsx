@@ -2,7 +2,7 @@
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { Button } from "@/components/ui/button";
-import { Home, PlusCircle, History, Heart, Wallet, LogOut } from 'lucide-react';
+import { Home, PlusCircle, History, Heart, Wallet, LogOut, DollarSign } from 'lucide-react';
 import { useAppContext } from '@/contexts/AppContext';
 
 const NavBar = () => {
@@ -11,10 +11,10 @@ const NavBar = () => {
   
   const navItems = [
     { path: '/', icon: <Home className="w-5 h-5" />, label: 'Home' },
+    { path: '/add-income', icon: <DollarSign className="w-5 h-5" />, label: 'Income' },
     { path: '/add-expense', icon: <PlusCircle className="w-5 h-5" />, label: 'Add' },
-    { path: '/transactions', icon: <History className="w-5 h-5" />, label: 'Transactions' },
+    { path: '/transactions', icon: <History className="w-5 h-5" />, label: 'History' },
     { path: '/goals', icon: <Heart className="w-5 h-5" />, label: 'Goals' },
-    { path: '/loans', icon: <Wallet className="w-5 h-5" />, label: 'Loans' },
   ];
 
   return (
@@ -43,6 +43,7 @@ export const Sidebar = () => {
   
   const navItems = [
     { path: '/', icon: <Home className="w-5 h-5" />, label: 'Dashboard' },
+    { path: '/add-income', icon: <DollarSign className="w-5 h-5" />, label: 'Add Income' },
     { path: '/add-expense', icon: <PlusCircle className="w-5 h-5" />, label: 'Add Expense' },
     { path: '/transactions', icon: <History className="w-5 h-5" />, label: 'Transactions' },
     { path: '/goals', icon: <Heart className="w-5 h-5" />, label: 'Saving Goals' },

@@ -11,6 +11,7 @@ import { useEffect } from "react";
 // Pages
 import AuthPage from "./pages/AuthPage";
 import Home from "./pages/Home";
+import AddIncome from "./pages/AddIncome";
 import AddExpense from "./pages/AddExpense";
 import Transactions from "./pages/Transactions";
 import SavingGoals from "./pages/SavingGoals";
@@ -72,6 +73,7 @@ const AppRoutes = () => {
       <Route path="/index" element={<Index />} />
       
       <Route path="/" element={<PrivateRoute><Layout><Home /></Layout></PrivateRoute>} />
+      <Route path="/add-income" element={<PrivateRoute><Layout><AddIncome /></Layout></PrivateRoute>} />
       <Route path="/add-expense" element={<PrivateRoute><Layout><AddExpense /></Layout></PrivateRoute>} />
       <Route path="/transactions" element={<PrivateRoute><Layout><Transactions /></Layout></PrivateRoute>} />
       <Route path="/goals" element={<PrivateRoute><Layout><SavingGoals /></Layout></PrivateRoute>} />
