@@ -13,8 +13,9 @@ const NavBar = () => {
     { path: '/', icon: <Home className="w-5 h-5" />, label: 'Home' },
     { path: '/add-income', icon: <DollarSign className="w-5 h-5" />, label: 'Income' },
     { path: '/add-expense', icon: <PlusCircle className="w-5 h-5" />, label: 'Add' },
-    { path: '/transactions', icon: <History className="w-5 h-5" />, label: 'History' },
     { path: '/goals', icon: <Heart className="w-5 h-5" />, label: 'Goals' },
+    { path: '/loans', icon: <Wallet className="w-5 h-5" />, label: 'Loans' },
+    { path: '/transactions', icon: <History className="w-5 h-5" />, label: 'History' },
     { path: '/profile', icon: <User className="w-5 h-5" />, label: 'Profile' }
   ];
 

@@ -12,11 +12,12 @@ import { useAppContext } from '@/contexts/AppContext';
 import { toast } from 'sonner';
 import { useAuth } from '@/contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
+import { Textarea } from '@/components/ui/textarea';
 
 const formSchema = z.object({
   amount: z.coerce.number().positive('Income must be a positive number'),
   description: z.string().optional(),
-  category: z.string().optional(),
+  category: z.string(),
 });
 
 const categoryOptions = [
@@ -38,6 +39,8 @@ const IncomeForm = ({ onSuccess }: IncomeFormProps) => {
   const navigate = useNavigate();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [profileReady, setProfileReady] = useState(false);
+  const [customCategory, setCustomCategory] = useState('');
+  const [showCustomCategory, setShowCustomCategory] = useState(false);
   
   useEffect(() => {
     // Ensure profile exists when component mounts
@@ -74,14 +77,19 @@ const IncomeForm = ({ onSuccess }: IncomeFormProps) => {
     
     setIsSubmitting(true);
     try {
+      // Use the custom category if "other" is selected and a custom value is provided
+      const finalCategory = values.category === 'other' && customCategory ? customCategory : values.category;
+      
       await addIncome({
         amount: values.amount,
         date: new Date(),
         description: values.description,
-        category: values.category,
+        category: finalCategory,
       });
       
       form.reset();
+      setCustomCategory('');
+      setShowCustomCategory(false);
       toast.success('Income added successfully!');
       
       // Call onSuccess callback if provided
@@ -94,6 +102,11 @@ const IncomeForm = ({ onSuccess }: IncomeFormProps) => {
     } finally {
       setIsSubmitting(false);
     }
+  };
+  
+  const handleCategoryChange = (value: string) => {
+    form.setValue('category', value);
+    setShowCustomCategory(value === 'other');
   };
   
   return (
@@ -133,7 +146,7 @@ const IncomeForm = ({ onSuccess }: IncomeFormProps) => {
                 <FormItem>
                   <FormLabel>Category</FormLabel>
                   <Select 
-                    onValueChange={field.onChange} 
+                    onValueChange={handleCategoryChange}
                     defaultValue={field.value}
                   >
                     <FormControl>
@@ -154,6 +167,19 @@ const IncomeForm = ({ onSuccess }: IncomeFormProps) => {
               )}
             />
             
+            {showCustomCategory && (
+              <FormItem>
+                <FormLabel>Custom Category</FormLabel>
+                <FormControl>
+                  <Input
+                    placeholder="Enter custom category"
+                    value={customCategory}
+                    onChange={(e) => setCustomCategory(e.target.value)}
+                  />
+                </FormControl>
+              </FormItem>
+            )}
+            
             <FormField
               control={form.control}
               name="description"
@@ -161,7 +187,7 @@ const IncomeForm = ({ onSuccess }: IncomeFormProps) => {
                 <FormItem>
                   <FormLabel>Description</FormLabel>
                   <FormControl>
-                    <Input placeholder="Monthly salary" {...field} />
+                    <Textarea placeholder="Monthly salary" {...field} />
                   </FormControl>
                   <FormDescription>
                     Add a short description for this income

@@ -1,192 +1,191 @@
 
-import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { Button } from "@/components/ui/button";
+import React, { useState } from 'react';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import * as z from 'zod';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
+import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Calendar } from "@/components/ui/calendar";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { format } from "date-fns";
-import { Calendar as CalendarIcon } from "lucide-react";
-import { useAppContext, ExpenseCategory, EXPENSE_CATEGORIES } from '@/contexts/AppContext';
-import { toast } from "sonner";
+import { useAppContext } from '@/contexts/AppContext';
+import { toast } from 'sonner';
+import { useAuth } from '@/contexts/AuthContext';
+import { useNavigate } from 'react-router-dom';
 
-const categories: {value: ExpenseCategory, label: string}[] = [
-  { value: 'Food', label: 'Food' },
-  { value: 'Shopping', label: 'Shopping' },
-  { value: 'Transportation', label: 'Transportation' },
-  { value: 'Entertainment', label: 'Entertainment' },
-  { value: 'Health', label: 'Health' },
-  { value: 'Utilities', label: 'Utilities' },
-  { value: 'Other', label: 'Other' }
-];
+const formSchema = z.object({
+  amount: z.coerce.number().positive('Expense must be a positive number'),
+  description: z.string().optional(),
+  category: z.string(),
+});
 
-const ExpenseForm = () => {
+interface ExpenseFormProps {
+  onSuccess?: () => void;
+}
+
+const ExpenseForm = ({ onSuccess }: ExpenseFormProps) => {
+  const { addExpense, EXPENSE_CATEGORIES, isLoading, ensureProfileExists } = useAppContext();
+  const { user } = useAuth();
   const navigate = useNavigate();
-  const { addExpense, ensureProfileExists } = useAppContext();
-  const [amount, setAmount] = useState('');
-  const [category, setCategory] = useState<ExpenseCategory>('Food');
-  const [description, setDescription] = useState('');
-  const [date, setDate] = useState<Date>(new Date());
-  const [isLoading, setIsLoading] = useState(false);
-  const [profileReady, setProfileReady] = useState(false);
-  
-  useEffect(() => {
-    // Ensure profile exists when component mounts
-    const checkProfile = async () => {
-      const exists = await ensureProfileExists();
-      setProfileReady(exists);
-    };
-    checkProfile();
-  }, [ensureProfileExists]);
-  
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    
-    if (!amount || parseFloat(amount) <= 0) {
-      toast.error('Please enter a valid amount');
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [customCategory, setCustomCategory] = useState('');
+  const [showCustomCategory, setShowCustomCategory] = useState(false);
+
+  const form = useForm<z.infer<typeof formSchema>>({
+    resolver: zodResolver(formSchema),
+    defaultValues: {
+      amount: 0,
+      description: '',
+      category: 'Food',
+    },
+  });
+
+  const onSubmit = async (values: z.infer<typeof formSchema>) => {
+    if (!user) {
+      toast.error('You must be logged in to add expense');
+      navigate('/auth');
       return;
     }
-    
-    if (!category) {
-      toast.error('Please select a category');
+
+    // Ensure user profile exists before proceeding
+    const profileExists = await ensureProfileExists();
+    if (!profileExists) {
+      toast.error('Could not create your profile. Please try again.');
       return;
     }
-    
-    if (!description) {
-      toast.error('Please enter a description');
-      return;
-    }
-    
-    setIsLoading(true);
-    
+
+    setIsSubmitting(true);
     try {
-      // Ensure profile exists before proceeding
-      if (!profileReady) {
-        const exists = await ensureProfileExists();
-        if (!exists) {
-          toast.error('Failed to create user profile');
-          return;
-        }
-      }
-      
-      // Add the new expense
+      // Use custom category if "Other" is selected and custom value is provided
+      const finalCategory = values.category === 'Other' && customCategory ? customCategory : values.category;
+
       await addExpense({
-        amount: parseFloat(amount),
-        category,
-        description,
-        date: date || new Date()
+        amount: values.amount,
+        date: new Date(),
+        description: values.description || '',
+        category: finalCategory,
       });
+
+      form.reset();
+      setCustomCategory('');
+      setShowCustomCategory(false);
+      toast.success('Expense added successfully!');
       
-      // Reset form and navigate back to dashboard
-      setAmount('');
-      setCategory('Food');
-      setDescription('');
-      setDate(new Date());
-      
-      navigate('/');
+      if (onSuccess) {
+        onSuccess();
+      }
     } catch (error: any) {
-      console.error('Failed to add expense:', error);
+      console.error('Error adding expense:', error);
       toast.error(error.message || 'Failed to add expense');
     } finally {
-      setIsLoading(false);
+      setIsSubmitting(false);
     }
   };
-  
+
+  const handleCategoryChange = (value: string) => {
+    form.setValue('category', value);
+    setShowCustomCategory(value === 'Other');
+  };
+
   return (
-    <Card className="max-w-lg mx-auto">
+    <Card>
       <CardHeader>
-        <CardTitle className="text-2xl font-bold">Add Expense</CardTitle>
-        <CardDescription>Record a new expense to track your spending</CardDescription>
+        <CardTitle>Add Expense</CardTitle>
+        <CardDescription>
+          Record your expenses to better track your spending
+        </CardDescription>
       </CardHeader>
-      <CardContent>
-        <form onSubmit={handleSubmit} className="space-y-6">
-          <div className="space-y-2">
-            <Label htmlFor="amount">Amount</Label>
-            <div className="relative">
-              <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
-                <span className="text-gray-500">₹</span>
-              </div>
-              <Input
-                id="amount"
-                type="number"
-                placeholder="0.00"
-                className="pl-8"
-                value={amount}
-                onChange={(e) => setAmount(e.target.value)}
-                required
-              />
-            </div>
-          </div>
-          
-          <div className="space-y-2">
-            <Label htmlFor="category">Category</Label>
-            <Select value={category} onValueChange={(value) => setCategory(value as ExpenseCategory)}>
-              <SelectTrigger id="category">
-                <SelectValue placeholder="Select a category" />
-              </SelectTrigger>
-              <SelectContent>
-                {categories.map((cat) => (
-                  <SelectItem key={cat.value} value={cat.value}>
-                    {cat.label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-          
-          <div className="space-y-2">
-            <Label htmlFor="description">Description</Label>
-            <Textarea
-              id="description"
-              placeholder="What was this expense for?"
-              value={description}
-              onChange={(e) => setDescription(e.target.value)}
-              className="resize-none"
-              rows={3}
-              required
+      <Form {...form}>
+        <form onSubmit={form.handleSubmit(onSubmit)}>
+          <CardContent className="space-y-4">
+            <FormField
+              control={form.control}
+              name="amount"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Amount (₹)</FormLabel>
+                  <FormControl>
+                    <Input
+                      type="number"
+                      placeholder="0"
+                      {...field}
+                      onChange={(e) => field.onChange(e.target.valueAsNumber)}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
             />
-          </div>
-          
-          <div className="space-y-2">
-            <Label htmlFor="date">Date</Label>
-            <Popover>
-              <PopoverTrigger asChild>
-                <Button
-                  variant="outline"
-                  className="w-full justify-start text-left font-normal"
-                  id="date"
-                >
-                  <CalendarIcon className="h-4 w-4 mr-2" />
-                  {date ? format(date, "PPP") : <span>Pick a date</span>}
-                </Button>
-              </PopoverTrigger>
-              <PopoverContent className="w-auto p-0">
-                <Calendar
-                  mode="single"
-                  selected={date}
-                  onSelect={(date) => date && setDate(date)}
-                  initialFocus
-                />
-              </PopoverContent>
-            </Popover>
-          </div>
-          
-          <div className="pt-2">
-            <Button type="submit" className="w-full" disabled={isLoading}>
-              {isLoading ? 'Adding Expense...' : 'Add Expense'}
+
+            <FormField
+              control={form.control}
+              name="category"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Category</FormLabel>
+                  <Select 
+                    onValueChange={handleCategoryChange}
+                    defaultValue={field.value}
+                  >
+                    <FormControl>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select a category" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      {EXPENSE_CATEGORIES.map((category) => (
+                        <SelectItem key={category} value={category}>
+                          {category}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            {showCustomCategory && (
+              <FormItem>
+                <FormLabel>Custom Category</FormLabel>
+                <FormControl>
+                  <Input
+                    placeholder="Enter custom category"
+                    value={customCategory}
+                    onChange={(e) => setCustomCategory(e.target.value)}
+                  />
+                </FormControl>
+              </FormItem>
+            )}
+
+            <FormField
+              control={form.control}
+              name="description"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Description</FormLabel>
+                  <FormControl>
+                    <Input placeholder="Groceries at SuperMart" {...field} />
+                  </FormControl>
+                  <FormDescription>
+                    Add a short description for this expense
+                  </FormDescription>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          </CardContent>
+          <CardFooter>
+            <Button
+              type="submit"
+              className="w-full"
+              disabled={isSubmitting || isLoading}
+            >
+              {isSubmitting ? 'Adding...' : 'Add Expense'}
             </Button>
-          </div>
+          </CardFooter>
         </form>
-      </CardContent>
-      <CardFooter className="flex justify-center">
-        <Button variant="ghost" onClick={() => navigate('/')}>
-          Cancel
-        </Button>
-      </CardFooter>
+      </Form>
     </Card>
   );
 };

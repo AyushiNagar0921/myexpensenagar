@@ -21,7 +21,9 @@ const AddExpense = () => {
   if (isLoading && !profileChecked) {
     return (
       <div className="space-y-6">
-        <Skeleton className="h-8 w-3/4 mx-auto" />
+        <div className="text-center mb-4 md:hidden">
+          <h2 className="text-3xl font-bold tracking-tight">Add Expense</h2>
+        </div>
         <Skeleton className="h-[400px] w-full" />
       </div>
     );
@@ -29,7 +31,7 @@ const AddExpense = () => {
   
   return (
     <div className="space-y-6">
-      <div className="text-center mb-4 md:hidden">
+      <div className="flex items-center justify-between mb-4">
         <h2 className="text-3xl font-bold tracking-tight">Add Expense</h2>
       </div>
       

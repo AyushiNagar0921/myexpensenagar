@@ -8,7 +8,7 @@ import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { IndianRupee, Settings, User as UserIcon } from "lucide-react";
+import { IndianRupee, LogOut, Settings, User as UserIcon } from "lucide-react";
 import { useAuth } from '@/contexts/AuthContext';
 import { useAppContext } from '@/contexts/AppContext';
 import { supabase } from '@/integrations/supabase/client';
@@ -18,7 +18,7 @@ import BudgetSetupForm from '@/components/budget/BudgetSetupForm';
 
 const Profile = () => {
   const { user: authUser, updateUserProfile } = useAuth();
-  const { income, expenses, loans, savingGoals, isLoading } = useAppContext();
+  const { income, expenses, loans, savingGoals, isLoading, logout } = useAppContext();
   
   const [username, setUsername] = useState(authUser?.user_metadata?.username || '');
   const [isUpdating, setIsUpdating] = useState(false);
@@ -91,6 +91,10 @@ const Profile = () => {
     toast.success('Budget preferences saved');
   };
 
+  const handleLogout = () => {
+    logout();
+  };
+
   // Format currency
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('en-IN', {
@@ -128,6 +132,14 @@ const Profile = () => {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <h2 className="text-3xl font-bold tracking-tight">Profile</h2>
+        <Button 
+          variant="destructive" 
+          className="flex items-center gap-2"
+          onClick={handleLogout}
+        >
+          <LogOut className="h-4 w-4" />
+          Sign Out
+        </Button>
       </div>
       
       <Tabs defaultValue="profile">

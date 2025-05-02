@@ -22,7 +22,7 @@ const AddIncome = () => {
   // If data is loading, show a skeleton
   if (isLoading && !profileChecked) {
     return (
-      <div className="container py-8 space-y-6">
+      <div className="space-y-6">
         <div className="flex items-center justify-between">
           <h2 className="text-3xl font-bold tracking-tight">Add Income</h2>
         </div>
@@ -32,8 +32,11 @@ const AddIncome = () => {
   }
   
   return (
-    <div className="container max-w-md mx-auto py-8">
-      <h2 className="text-3xl font-bold mb-6">Add Income</h2>
+    <div className="space-y-6">
+      <div className="flex items-center justify-between mb-4">
+        <h2 className="text-3xl font-bold tracking-tight">Add Income</h2>
+      </div>
+      
       <IncomeForm onSuccess={() => navigate('/')} />
     </div>
   );
