@@ -1,11 +1,25 @@
+
 import React, { useState, useEffect } from 'react';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Slider } from "@/components/ui/slider";
-import { ExpenseCategory } from '@/contexts/ExpenseContext';
 import { useBudgetContext } from '@/contexts/BudgetContext';
 import { toast } from 'sonner';
+
+// Define the ExpenseCategory enum values directly in this file
+const ExpenseCategories = {
+  Food: 'Food',
+  Housing: 'Housing',
+  Transportation: 'Transportation',
+  Utilities: 'Utilities',
+  Entertainment: 'Entertainment',
+  Healthcare: 'Healthcare',
+  Clothing: 'Clothing',
+  Debt: 'Debt',
+  Saving: 'Saving',
+  Other: 'Other'
+};
 
 interface BudgetSetupFormProps {
   onComplete: () => void;
@@ -58,16 +72,16 @@ const BudgetSetupForm: React.FC<BudgetSetupFormProps> = ({ onComplete, onDismiss
       
       // Save budget categories
       await saveBudgetCategories([
-        { category: ExpenseCategory.Food, amount: 0, percentage: food },
-        { category: ExpenseCategory.Housing, amount: 0, percentage: housing },
-        { category: ExpenseCategory.Transportation, amount: 0, percentage: transportation },
-        { category: ExpenseCategory.Utilities, amount: 0, percentage: utilities },
-        { category: ExpenseCategory.Entertainment, amount: 0, percentage: entertainment },
-        { category: ExpenseCategory.Healthcare, amount: 0, percentage: healthcare },
-        { category: ExpenseCategory.Clothing, amount: 0, percentage: clothing },
-        { category: ExpenseCategory.Debt, amount: 0, percentage: debt },
-        { category: ExpenseCategory.Saving, amount: 0, percentage: saving },
-        { category: ExpenseCategory.Other, amount: 0, percentage: other },
+        { category: ExpenseCategories.Food, amount: 0, percentage: food },
+        { category: ExpenseCategories.Housing, amount: 0, percentage: housing },
+        { category: ExpenseCategories.Transportation, amount: 0, percentage: transportation },
+        { category: ExpenseCategories.Utilities, amount: 0, percentage: utilities },
+        { category: ExpenseCategories.Entertainment, amount: 0, percentage: entertainment },
+        { category: ExpenseCategories.Healthcare, amount: 0, percentage: healthcare },
+        { category: ExpenseCategories.Clothing, amount: 0, percentage: clothing },
+        { category: ExpenseCategories.Debt, amount: 0, percentage: debt },
+        { category: ExpenseCategories.Saving, amount: 0, percentage: saving },
+        { category: ExpenseCategories.Other, amount: 0, percentage: other },
       ]);
       
       // Save budget to local storage

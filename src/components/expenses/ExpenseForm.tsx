@@ -9,6 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useAppContext } from '@/contexts/AppContext';
+import { useExpenseContext } from '@/contexts/ExpenseContext';
 import { toast } from 'sonner';
 import { useAuth } from '@/contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
@@ -24,7 +25,8 @@ interface ExpenseFormProps {
 }
 
 const ExpenseForm = ({ onSuccess }: ExpenseFormProps) => {
-  const { addExpense, EXPENSE_CATEGORIES, isLoading, ensureProfileExists } = useAppContext();
+  const { addExpense, isLoading, ensureProfileExists } = useAppContext();
+  const { EXPENSE_CATEGORIES } = useExpenseContext();
   const { user } = useAuth();
   const navigate = useNavigate();
   const [isSubmitting, setIsSubmitting] = useState(false);

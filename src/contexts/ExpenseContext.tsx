@@ -4,7 +4,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { useProfileContext } from './ProfileContext';
 
-export type ExpenseCategory = 'Food' | 'Shopping' | 'Transportation' | 'Entertainment' | 'Health' | 'Utilities' | 'Other' | string;
+export type ExpenseCategory = 'Food' | 'Shopping' | 'Transportation' | 'Entertainment' | 'Health' | 'Utilities' | 'Housing' | 'Clothing' | 'Debt' | 'Saving' | 'Healthcare' | 'Other' | string;
 
 export const EXPENSE_CATEGORIES: ExpenseCategory[] = [
   'Food',
@@ -31,7 +31,7 @@ interface ExpenseContextType {
   setExpenses: React.Dispatch<React.SetStateAction<Expense[]>>;
   fetchExpenses: () => Promise<void>;
   isLoading: boolean;
-  EXPENSE_CATEGORIES: ExpenseCategory[]; // Add this to the interface
+  EXPENSE_CATEGORIES: ExpenseCategory[];
 }
 
 const ExpenseContext = createContext<ExpenseContextType | undefined>(undefined);
@@ -139,7 +139,7 @@ export function ExpenseProvider({ children }: { children: React.ReactNode }) {
         setExpenses,
         fetchExpenses,
         isLoading,
-        EXPENSE_CATEGORIES // Add this to the provider value
+        EXPENSE_CATEGORIES
       }}
     >
       {children}

@@ -1,10 +1,11 @@
 
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { useAppContext, ExpenseCategory } from '@/contexts/AppContext';
+import { useAppContext } from '@/contexts/AppContext';
+import { ExpenseCategory } from '@/contexts/ExpenseContext';
 
 // Icons for each expense category
-const getCategoryIcon = (category: ExpenseCategory) => {
+const getCategoryIcon = (category: string) => {
   switch (category) {
     case 'Food':
       return <div className="bg-category-food/20 p-2 rounded-full"><div className="h-2 w-2 bg-category-food rounded-full"></div></div>;

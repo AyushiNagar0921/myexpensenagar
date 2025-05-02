@@ -2,11 +2,11 @@
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useAppContext } from '@/contexts/AppContext';
-import { ExpenseCategory } from '@/contexts/AppContext';
+import { ExpenseCategory } from '@/contexts/ExpenseContext';
 import { PieChart, Pie, ResponsiveContainer, Cell, Tooltip, Legend } from 'recharts';
 
 // Define colors for each expense category
-const CATEGORY_COLORS: Record<ExpenseCategory, string> = {
+const CATEGORY_COLORS: Record<string, string> = {
   Food: '#10B981', // green
   Shopping: '#6366F1', // indigo 
   Transportation: '#F59E0B', // amber
@@ -39,7 +39,7 @@ const CategoryBreakdown = () => {
   const { expenses } = useAppContext();
   
   // Group expenses by category and calculate totals
-  const categoryTotals = expenses.reduce((acc, expense) => {
+  const categoryTotals = expenses.reduce((acc: Record<string, number>, expense) => {
     const { category, amount } = expense;
     if (!acc[category]) acc[category] = 0;
     acc[category] += amount;
@@ -52,7 +52,7 @@ const CategoryBreakdown = () => {
   const chartData = Object.entries(categoryTotals).map(([category, amount]) => ({
     name: category.charAt(0).toUpperCase() + category.slice(1),
     value: amount,
-    percentage: ((amount / totalAmount) * 100).toFixed(1)
+    percentage: totalAmount > 0 ? ((amount / totalAmount) * 100).toFixed(1) : '0'
   }));
   
   return (
@@ -81,7 +81,7 @@ const CategoryBreakdown = () => {
                   {chartData.map((entry, index) => (
                     <Cell 
                       key={`cell-${index}`} 
-                      fill={CATEGORY_COLORS[entry.name as ExpenseCategory] || CATEGORY_COLORS.Other} 
+                      fill={CATEGORY_COLORS[entry.name] || CATEGORY_COLORS.Other} 
                     />
                   ))}
                 </Pie>

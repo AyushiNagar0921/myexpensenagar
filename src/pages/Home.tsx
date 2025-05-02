@@ -10,6 +10,8 @@ import BudgetSetupPrompt from '@/components/budget/BudgetSetupPrompt';
 import BudgetSetupForm from '@/components/budget/BudgetSetupForm';
 import { useAppContext } from '@/contexts/AppContext';
 import { supabase } from '@/integrations/supabase/client';
+import { Button } from '@/components/ui/button';
+import { Link } from 'react-router-dom';
 
 const Home = () => {
   const [showBudgetSetup, setShowBudgetSetup] = useState(false);
@@ -61,7 +63,16 @@ const Home = () => {
   
   return (
     <div className="space-y-6">
-      <h2 className="text-3xl font-bold tracking-tight">Dashboard</h2>
+      <div className="flex items-center justify-between">
+        <h2 className="text-3xl font-bold tracking-tight">Dashboard</h2>
+        <div className="hidden md:block">
+          <Link to="/profile">
+            <Button variant="outline" size="sm">
+              Profile
+            </Button>
+          </Link>
+        </div>
+      </div>
       
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
         <div className="col-span-full md:col-span-2">

@@ -1,10 +1,11 @@
+
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { useAuth } from './AuthContext';
 import { useProfileContext, ProfileProvider } from './ProfileContext';
 import { useSavingGoalContext, SavingGoalProvider } from './SavingGoalContext';
 import { useLoanContext, LoanProvider } from './LoanContext';
 import { useIncomeContext, IncomeProvider } from './IncomeContext';
-import { useExpenseContext, ExpenseProvider } from './ExpenseContext';
+import { useExpenseContext, ExpenseProvider, Expense } from './ExpenseContext';
 import { useBudgetContext, BudgetProvider } from './BudgetContext';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
@@ -37,10 +38,9 @@ interface AppContextType {
   deleteIncome: (id: string) => Promise<void>;
   
   // Expenses
-  expenses: any[];
+  expenses: Expense[];
   fetchExpenses: () => Promise<void>;
   addExpense: (expense: any) => Promise<void>;
-  updateExpense: (id: string, expense: any) => Promise<void>;
   deleteExpense: (id: string) => Promise<void>;
   
   // Budget
@@ -101,7 +101,7 @@ function AppContextWrapper({ children }: { children: React.ReactNode }) {
           await Promise.all([
             savingGoalContext.fetchSavingGoals(),
             loanContext.fetchLoans(),
-            incomeContext.fetchIncome(),
+            incomeContext.fetchIncomes(),
             expenseContext.fetchExpenses()
           ]);
         } catch (error) {
@@ -117,7 +117,8 @@ function AppContextWrapper({ children }: { children: React.ReactNode }) {
   }, [user]);
   
   // Calculate total income
-  const totalIncome = incomeContext.income.reduce((sum, inc) => sum + inc.amount, 0);
+  const totalIncome = Array.isArray(incomeContext.income) ? 
+    incomeContext.income.reduce((sum: number, inc: any) => sum + inc.amount, 0) : 0;
   
   // Calculate total expenses
   const totalExpenses = expenseContext.expenses.reduce((sum, expense) => sum + expense.amount, 0);
@@ -149,21 +150,20 @@ function AppContextWrapper({ children }: { children: React.ReactNode }) {
     loans: loanContext.loans,
     fetchLoans: loanContext.fetchLoans,
     addLoan: loanContext.addLoan,
-    updateLoan: loanContext.updateLoan,
+    updateLoan: loanContext.updateLoanPayment, // Fixed: updateLoan -> updateLoanPayment
     deleteLoan: loanContext.deleteLoan,
     
     // Income
     income: incomeContext.income,
-    fetchIncome: incomeContext.fetchIncome,
+    fetchIncome: incomeContext.fetchIncomes, // Fixed: fetchIncome -> fetchIncomes
     addIncome: incomeContext.addIncome,
-    updateIncome: incomeContext.updateIncome,
-    deleteIncome: incomeContext.deleteIncome,
+    updateIncome: incomeContext.updateIncome, // This needs to be added to IncomeContext
+    deleteIncome: incomeContext.deleteIncome, // This needs to be added to IncomeContext
     
     // Expenses
     expenses: expenseContext.expenses,
     fetchExpenses: expenseContext.fetchExpenses,
     addExpense: expenseContext.addExpense,
-    updateExpense: expenseContext.updateExpense,
     deleteExpense: expenseContext.deleteExpense,
     
     // Budget

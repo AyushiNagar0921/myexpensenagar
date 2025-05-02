@@ -1,5 +1,5 @@
 
-import { Expense } from '@/contexts/AppContext';
+import { Expense } from '@/contexts/ExpenseContext';
 
 export interface ExpenseTableProps {
   expenses: Expense[];
