@@ -1,3 +1,4 @@
+
 import React, { useEffect, useState } from 'react';
 import IncomeForm from '@/components/income/IncomeForm';
 import { useAppContext } from '@/contexts/AppContext';
@@ -7,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { User } from "lucide-react";
 
 const AddIncome = () => {
-  const { income, isLoading, ensureProfileExists } = useAppContext();
+  const { incomes, isLoading, ensureProfileExists } = useAppContext();
   const navigate = useNavigate();
   const [profileChecked, setProfileChecked] = useState(false);
 

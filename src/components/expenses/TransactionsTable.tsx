@@ -4,8 +4,6 @@ import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useAppContext } from '@/contexts/AppContext';
 import { ExpenseCategory } from './types';
-import { useExpenseContext } from '@/contexts/ExpenseContext';
-import { useIncomeContext } from '@/contexts/IncomeContext';
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { format } from "date-fns";
@@ -25,7 +23,7 @@ const categories: {value: ExpenseCategory | 'all', label: string}[] = [
 ];
 
 // Get category badge color class
-const getCategoryColorClass = (category: ExpenseCategory) => {
+const getCategoryColorClass = (category: string): string => {
   switch (category) {
     case 'Food':
       return 'bg-category-food text-white';

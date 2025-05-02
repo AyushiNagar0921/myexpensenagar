@@ -10,10 +10,32 @@ import { useBudgetContext, BudgetProvider } from './BudgetContext';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 
-// Import the types from their respective contexts
-import { SavingGoal } from './SavingGoalContext';
-import { Loan } from './LoanContext';
-import { Income } from './IncomeContext';
+// Define the types locally to avoid circular dependencies
+export type SavingGoal = {
+  id: string;
+  title: string;
+  targetAmount: number;
+  currentAmount: number;
+  deadline?: Date;
+};
+
+export type Loan = {
+  id: string;
+  title: string;
+  totalAmount: number;
+  remainingAmount: number;
+  monthlyPayment: number;
+  dueDay: number;
+  nextPaymentDate: Date;
+};
+
+export type Income = {
+  id: string;
+  amount: number;
+  date: Date;
+  description?: string;
+  category?: string;
+};
 
 interface AppContextType {
   // Profile
@@ -66,8 +88,6 @@ interface AppContextType {
 const AppContext = createContext<AppContextType | undefined>(undefined);
 
 export function AppProvider({ children }: { children: React.ReactNode }) {
-  const { user } = useAuth();
-  
   // Create a wrapper component that provides all the context providers
   return (
     <ProfileProvider>
@@ -127,7 +147,7 @@ function AppContextWrapper({ children }: { children: React.ReactNode }) {
   
   // Calculate total income
   const totalIncome = Array.isArray(incomeContext.incomes) ? 
-    incomeContext.incomes.reduce((sum: number, inc: Income) => sum + inc.amount, 0) : 0;
+    incomeContext.incomes.reduce((sum: number, inc: any) => sum + inc.amount, 0) : 0;
   
   // Calculate total expenses
   const totalExpenses = expenseContext.expenses.reduce((sum, expense) => sum + expense.amount, 0);
@@ -210,5 +230,3 @@ export const useAppContext = () => {
   }
   return context;
 };
-
-export { SavingGoal, Loan, Income };
