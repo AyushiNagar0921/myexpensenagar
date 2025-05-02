@@ -1,4 +1,3 @@
-
 import React, { createContext, useContext, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
@@ -17,6 +16,7 @@ export interface Loan {
 interface LoanContextType {
   loans: Loan[];
   addLoan: (loan: Omit<Loan, "id">) => Promise<void>;
+  updateLoan: (id: string, loan: any) => Promise<void>;
   updateLoanPayment: (loanId: string, paymentAmount: number) => Promise<void>;
   deleteLoan: (id: string) => Promise<void>;
   setLoans: React.Dispatch<React.SetStateAction<Loan[]>>;
@@ -109,6 +109,48 @@ export function LoanProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
+  const updateLoan = async (id: string, loanData: any) => {
+    try {
+      setIsLoading(true);
+      
+      // Format the data for Supabase
+      const formattedData = {
+        title: loanData.title,
+        total_amount: loanData.totalAmount,
+        remaining_amount: loanData.remainingAmount,
+        monthly_payment: loanData.monthlyPayment,
+        due_day: loanData.dueDay,
+        next_payment_date: loanData.nextPaymentDate?.toISOString(),
+      };
+      
+      const { error } = await supabase
+        .from('loans')
+        .update(formattedData)
+        .eq('id', id);
+      
+      if (error) throw error;
+      
+      // Update the loans in state
+      setLoans(prevLoans => 
+        prevLoans.map(loan => 
+          loan.id === id
+            ? {
+                ...loan,
+                ...loanData
+              }
+            : loan
+        )
+      );
+      
+      toast.success('Loan updated successfully!');
+    } catch (error: any) {
+      console.error('Error updating loan:', error);
+      toast.error(error.message || 'Failed to update loan');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   const updateLoanPayment = async (loanId: string, paymentAmount: number) => {
     try {
       setIsLoading(true);
@@ -185,6 +227,7 @@ export function LoanProvider({ children }: { children: React.ReactNode }) {
       value={{
         loans,
         addLoan,
+        updateLoan,
         updateLoanPayment,
         deleteLoan,
         setLoans,
