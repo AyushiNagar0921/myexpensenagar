@@ -29,6 +29,10 @@ const IncomeSetupForm = () => {
         date: new Date(),
         description: 'Monthly Income'
       });
+      
+      // Set a flag to show budget setup after redirect
+      sessionStorage.setItem('incomeJustAdded', 'true');
+      
       navigate('/');
     } catch (error) {
       console.error(error);

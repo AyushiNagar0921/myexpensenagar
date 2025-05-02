@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from '@/components/ui/sheet';
 import BalanceCard from '@/components/dashboard/BalanceCard';
@@ -6,19 +5,33 @@ import RecentExpenses from '@/components/dashboard/RecentExpenses';
 import CategoryBreakdown from '@/components/dashboard/CategoryBreakdown';
 import SavingsGoalsCard from '@/components/dashboard/SavingsGoalsCard';
 import ActiveLoans from '@/components/dashboard/ActiveLoans';
-import BudgetSetupPrompt from '@/components/budget/BudgetSetupPrompt';
 import BudgetSetupForm from '@/components/budget/BudgetSetupForm';
 import { useAppContext } from '@/contexts/AppContext';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Link } from 'react-router-dom';
+import { Drawer, DrawerContent, DrawerHeader, DrawerTitle, DrawerDescription } from '@/components/ui/drawer';
+import { useMediaQuery } from '@/hooks/use-mobile';
 
 const Home = () => {
   const [showBudgetSetup, setShowBudgetSetup] = useState(false);
   const [hasBudget, setHasBudget] = useState(false);
+  const [justAddedIncome, setJustAddedIncome] = useState(false);
   const { ensureProfileExists, isLoading } = useAppContext();
+  const isMobile = useMediaQuery("(max-width: 768px)");
   
   useEffect(() => {
+    // Check if just added income
+    const checkJustAddedIncome = () => {
+      const incomeJustAdded = sessionStorage.getItem('incomeJustAdded');
+      if (incomeJustAdded === 'true') {
+        setJustAddedIncome(true);
+        sessionStorage.removeItem('incomeJustAdded');
+      }
+    };
+    
+    checkJustAddedIncome();
+    
     // Check if the user has a budget set up
     const checkBudget = async () => {
       // Ensure profile exists first
@@ -38,10 +51,15 @@ const Home = () => {
       if (!error && data && data.length > 0) {
         setHasBudget(true);
       } else {
-        // Check if user has dismissed the budget prompt
-        const dismissedBudget = localStorage.getItem('budgetSetupDismissed');
-        if (!dismissedBudget) {
+        // If income was just added, show budget setup automatically
+        if (justAddedIncome) {
           setShowBudgetSetup(true);
+        } else {
+          // Otherwise check if user has dismissed the budget prompt
+          const dismissedBudget = localStorage.getItem('budgetSetupDismissed');
+          if (!dismissedBudget) {
+            setShowBudgetSetup(true);
+          }
         }
       }
     };
@@ -49,7 +67,7 @@ const Home = () => {
     if (!isLoading) {
       checkBudget();
     }
-  }, [ensureProfileExists, isLoading]);
+  }, [ensureProfileExists, isLoading, justAddedIncome]);
   
   const handleBudgetSetupComplete = () => {
     setShowBudgetSetup(false);
@@ -60,17 +78,26 @@ const Home = () => {
     localStorage.setItem('budgetSetupDismissed', 'true');
     setShowBudgetSetup(false);
   };
+
+  const BudgetSetupContent = (
+    <>
+      <div className="px-2 md:px-4">
+        <BudgetSetupForm
+          onComplete={handleBudgetSetupComplete}
+          onDismiss={handleBudgetSetupDismiss}
+        />
+      </div>
+    </>
+  );
   
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <h2 className="text-3xl font-bold tracking-tight">Dashboard</h2>
         <div className="hidden md:block">
-          <Link to="/profile">
-            <Button variant="outline" size="sm">
-              Profile
-            </Button>
-          </Link>
+          <Button variant="outline" size="sm" asChild>
+            <Link to="/profile">Profile</Link>
+          </Button>
         </div>
       </div>
       
@@ -96,22 +123,32 @@ const Home = () => {
         </div>
       </div>
       
-      {/* Budget Setup Prompt */}
-      {showBudgetSetup && (
+      {/* Mobile: Use Drawer for budget setup */}
+      {showBudgetSetup && isMobile && (
+        <Drawer open={showBudgetSetup} onOpenChange={setShowBudgetSetup}>
+          <DrawerContent>
+            <DrawerHeader>
+              <DrawerTitle>Budget Setup</DrawerTitle>
+              <DrawerDescription>
+                Let's set up your budget to help you manage your finances
+              </DrawerDescription>
+            </DrawerHeader>
+            {BudgetSetupContent}
+          </DrawerContent>
+        </Drawer>
+      )}
+      
+      {/* Desktop: Use Sheet for budget setup */}
+      {showBudgetSetup && !isMobile && (
         <Sheet open={showBudgetSetup} onOpenChange={setShowBudgetSetup}>
-          <SheetContent className="sm:max-w-xl">
+          <SheetContent className="sm:max-w-xl overflow-y-auto">
             <SheetHeader>
               <SheetTitle>Budget Setup</SheetTitle>
               <SheetDescription>
                 Let's set up your budget to help you manage your finances
               </SheetDescription>
             </SheetHeader>
-            <div className="mt-6">
-              <BudgetSetupForm
-                onComplete={handleBudgetSetupComplete}
-                onDismiss={handleBudgetSetupDismiss}
-              />
-            </div>
+            {BudgetSetupContent}
           </SheetContent>
         </Sheet>
       )}
