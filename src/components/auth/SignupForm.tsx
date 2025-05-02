@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
@@ -21,7 +20,7 @@ const SignupForm: React.FC<SignupFormProps> = ({ onToggleForm }) => {
   const [avatarUrl, setAvatarUrl] = useState('');
   const [previewUrl, setPreviewUrl] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-  const { signUp, updateUserProfile } = useAuth();
+  const { signUp } = useAuth();
   
   const handleAvatarChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -79,18 +78,14 @@ const SignupForm: React.FC<SignupFormProps> = ({ onToggleForm }) => {
     setIsLoading(true);
     
     try {
-      // First sign up the user
-      await signUp(email, password);
-      
-      // Then update their profile if username or avatar was provided
-      if (username || avatarUrl) {
-        await updateUserProfile({
-          username,
-          avatar_url: avatarUrl || null
-        });
-      }
+      // Sign up with user profile data
+      await signUp(email, password, {
+        username: username || undefined,
+        avatar_url: avatarUrl || undefined
+      });
     } catch (error) {
       // Error handled in the auth context
+      console.error("Signup error:", error);
     } finally {
       setIsLoading(false);
     }

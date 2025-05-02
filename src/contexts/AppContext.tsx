@@ -1,165 +1,197 @@
-
-import React, { useEffect } from 'react';
-import { ProfileProvider, useProfileContext } from './ProfileContext';
-import { IncomeProvider, useIncomeContext } from './IncomeContext';
-import { ExpenseProvider, useExpenseContext, EXPENSE_CATEGORIES } from './ExpenseContext';
-import { SavingGoalProvider, useSavingGoalContext } from './SavingGoalContext';
-import { LoanProvider, useLoanContext } from './LoanContext';
-import { BudgetProvider, useBudgetContext } from './BudgetContext';
-
-// Re-export all types from individual contexts
-export type { Income } from './IncomeContext';
-export type { Expense, ExpenseCategory } from './ExpenseContext';
-export { EXPENSE_CATEGORIES } from './ExpenseContext';
-export type { SavingGoal } from './SavingGoalContext';
-export type { Loan } from './LoanContext';
-export type { BudgetCategory } from './BudgetContext';
+import React, { createContext, useContext, useState, useEffect } from 'react';
+import { useAuth } from './AuthContext';
+import { useProfileContext, ProfileProvider } from './ProfileContext';
+import { useSavingGoalContext, SavingGoalProvider } from './SavingGoalContext';
+import { useLoanContext, LoanProvider } from './LoanContext';
+import { useIncomeContext, IncomeProvider } from './IncomeContext';
+import { useExpenseContext, ExpenseProvider } from './ExpenseContext';
+import { useBudgetContext, BudgetProvider } from './BudgetContext';
+import { supabase } from '@/integrations/supabase/client';
+import { toast } from 'sonner';
 
 interface AppContextType {
-  // Combine the exports from all contexts
-  incomes: ReturnType<typeof useIncomeContext>['incomes'];
-  expenses: ReturnType<typeof useExpenseContext>['expenses'];
-  savingGoals: ReturnType<typeof useSavingGoalContext>['savingGoals'];
-  loans: ReturnType<typeof useLoanContext>['loans'];
-  income?: ReturnType<typeof useIncomeContext>['income'];
-  totalIncome: ReturnType<typeof useIncomeContext>['totalIncome'];
-  remainingBalance: number;
-  addIncome: ReturnType<typeof useIncomeContext>['addIncome'];
-  setIncome: (incomeData: Omit<ReturnType<typeof useIncomeContext>['incomes'][0], "id">) => Promise<void>;
-  addExpense: ReturnType<typeof useExpenseContext>['addExpense'];
-  deleteExpense: ReturnType<typeof useExpenseContext>['deleteExpense'];
-  addSavingGoal: ReturnType<typeof useSavingGoalContext>['addSavingGoal'];
-  updateSavingGoal: ReturnType<typeof useSavingGoalContext>['updateSavingGoal'];
-  updateSavingGoalAmount: ReturnType<typeof useSavingGoalContext>['updateSavingGoalAmount'];
-  deleteSavingGoal: ReturnType<typeof useSavingGoalContext>['deleteSavingGoal'];
-  addLoan: ReturnType<typeof useLoanContext>['addLoan'];
-  updateLoanPayment: ReturnType<typeof useLoanContext>['updateLoanPayment'];
-  deleteLoan: ReturnType<typeof useLoanContext>['deleteLoan'];
-  saveBudgetCategories: ReturnType<typeof useBudgetContext>['saveBudgetCategories'];
-  logout: ReturnType<typeof useProfileContext>['logout'];
+  // Profile
+  profileExists: boolean;
+  ensureProfileExists: () => Promise<boolean>;
+  logout: () => Promise<void>;
+  
+  // Saving Goals
+  savingGoals: any[];
+  fetchSavingGoals: () => Promise<void>;
+  addSavingGoal: (goal: any) => Promise<void>;
+  updateSavingGoal: (id: string, goal: any) => Promise<void>;
+  deleteSavingGoal: (id: string) => Promise<void>;
+  
+  // Loans
+  loans: any[];
+  fetchLoans: () => Promise<void>;
+  addLoan: (loan: any) => Promise<void>;
+  updateLoan: (id: string, loan: any) => Promise<void>;
+  deleteLoan: (id: string) => Promise<void>;
+  
+  // Income
+  income: any[];
+  fetchIncome: () => Promise<void>;
+  addIncome: (income: any) => Promise<void>;
+  updateIncome: (id: string, income: any) => Promise<void>;
+  deleteIncome: (id: string) => Promise<void>;
+  
+  // Expenses
+  expenses: any[];
+  fetchExpenses: () => Promise<void>;
+  addExpense: (expense: any) => Promise<void>;
+  updateExpense: (id: string, expense: any) => Promise<void>;
+  deleteExpense: (id: string) => Promise<void>;
+  
+  // Budget
+  saveBudgetCategories: (categories: any[]) => Promise<void>;
+  
+  // Loading state
   isLoading: boolean;
-  profileExists: ReturnType<typeof useProfileContext>['profileExists'];
-  ensureProfileExists: ReturnType<typeof useProfileContext>['ensureProfileExists'];
-  EXPENSE_CATEGORIES: typeof EXPENSE_CATEGORIES;
+  
+  // Calculated values
+  totalIncome: number;
+  remainingBalance: number;
 }
 
-const CombinedContext = React.createContext<AppContextType | undefined>(undefined);
-
-function CombinedProvider({ children }: { children: React.ReactNode }) {
-  // Get data from all contexts
-  const { 
-    incomes, income, totalIncome, addIncome, fetchIncomes, isLoading: incomeLoading 
-  } = useIncomeContext();
-  
-  const { 
-    expenses, addExpense, deleteExpense, fetchExpenses, isLoading: expenseLoading, EXPENSE_CATEGORIES 
-  } = useExpenseContext();
-  
-  const {
-    savingGoals, addSavingGoal, updateSavingGoal, updateSavingGoalAmount,
-    deleteSavingGoal, fetchSavingGoals, isLoading: goalLoading
-  } = useSavingGoalContext();
-  
-  const {
-    loans, addLoan, updateLoanPayment, deleteLoan,
-    fetchLoans, isLoading: loanLoading
-  } = useLoanContext();
-  
-  const { saveBudgetCategories, isLoading: budgetLoading } = useBudgetContext();
-  
-  const { 
-    profileExists, ensureProfileExists, logout, isLoading: profileLoading 
-  } = useProfileContext();
-  
-  // Calculate total outgoings
-  const totalExpenses = expenses.reduce((sum, expense) => sum + expense.amount, 0);
-  const totalSavings = savingGoals.reduce((sum, goal) => sum + goal.currentAmount, 0);
-  const totalLoanPayments = loans.reduce((sum, loan) => sum + (loan.totalAmount - loan.remainingAmount), 0);
-  
-  // Calculate remaining balance by subtracting all outgoings from total income
-  const totalOutgoings = totalExpenses + totalSavings + totalLoanPayments;
-  const remainingBalance = totalIncome - totalOutgoings;
-  
-  // Determine combined loading state
-  const isLoading = incomeLoading || expenseLoading || goalLoading || 
-    loanLoading || budgetLoading || profileLoading;
-  
-  // Function to add an income (same as before but renamed for clarity)
-  const setIncome = addIncome;
-
-  useEffect(() => {
-    const loadData = async () => {
-      // First ensure the user profile exists
-      await ensureProfileExists();
-      
-      // Then fetch all data
-      await Promise.all([
-        fetchIncomes(),
-        fetchExpenses(),
-        fetchSavingGoals(),
-        fetchLoans()
-      ]);
-    };
-    
-    loadData();
-  }, []);
-
-  return (
-    <CombinedContext.Provider
-      value={{
-        incomes,
-        expenses,
-        savingGoals,
-        loans,
-        income,
-        totalIncome,
-        remainingBalance,
-        addIncome,
-        setIncome,
-        addExpense,
-        deleteExpense,
-        addSavingGoal,
-        updateSavingGoal,
-        updateSavingGoalAmount,
-        deleteSavingGoal,
-        addLoan,
-        updateLoanPayment,
-        deleteLoan,
-        saveBudgetCategories,
-        logout,
-        isLoading,
-        profileExists,
-        ensureProfileExists,
-        EXPENSE_CATEGORIES,
-      }}
-    >
-      {children}
-    </CombinedContext.Provider>
-  );
-}
+const AppContext = createContext<AppContextType | undefined>(undefined);
 
 export function AppProvider({ children }: { children: React.ReactNode }) {
+  const { user } = useAuth();
+  
+  // Create a wrapper component that provides all the context providers
   return (
     <ProfileProvider>
-      <IncomeProvider>
-        <ExpenseProvider>
-          <SavingGoalProvider>
-            <LoanProvider>
+      <SavingGoalProvider>
+        <LoanProvider>
+          <IncomeProvider>
+            <ExpenseProvider>
               <BudgetProvider>
-                <CombinedProvider>
-                  {children}
-                </CombinedProvider>
+                <AppContextWrapper>{children}</AppContextWrapper>
               </BudgetProvider>
-            </LoanProvider>
-          </SavingGoalProvider>
-        </ExpenseProvider>
-      </IncomeProvider>
+            </ExpenseProvider>
+          </IncomeProvider>
+        </LoanProvider>
+      </SavingGoalProvider>
     </ProfileProvider>
   );
 }
 
+function AppContextWrapper({ children }: { children: React.ReactNode }) {
+  const { user } = useAuth();
+  const profileContext = useProfileContext();
+  const savingGoalContext = useSavingGoalContext();
+  const loanContext = useLoanContext();
+  const incomeContext = useIncomeContext();
+  const expenseContext = useExpenseContext();
+  const budgetContext = useBudgetContext();
+  
+  const [isLoading, setIsLoading] = useState(true);
+  
+  // Fetch all data when user changes
+  useEffect(() => {
+    const fetchAllData = async () => {
+      if (user) {
+        setIsLoading(true);
+        try {
+          // Ensure profile exists
+          await profileContext.ensureProfileExists();
+          
+          // Fetch all data in parallel
+          await Promise.all([
+            savingGoalContext.fetchSavingGoals(),
+            loanContext.fetchLoans(),
+            incomeContext.fetchIncome(),
+            expenseContext.fetchExpenses()
+          ]);
+        } catch (error) {
+          console.error('Error fetching data:', error);
+          toast.error('Failed to load your data');
+        } finally {
+          setIsLoading(false);
+        }
+      }
+    };
+    
+    fetchAllData();
+  }, [user]);
+  
+  // Calculate total income
+  const totalIncome = incomeContext.income.reduce((sum, inc) => sum + inc.amount, 0);
+  
+  // Calculate total expenses
+  const totalExpenses = expenseContext.expenses.reduce((sum, expense) => sum + expense.amount, 0);
+  
+  // Calculate total loan payments (amount already paid)
+  const totalLoanPayments = loanContext.loans.reduce((sum, loan) => sum + (loan.totalAmount - loan.remainingAmount), 0);
+  
+  // Calculate total savings (current saved amount) 
+  const totalSavings = savingGoalContext.savingGoals.reduce((sum, goal) => sum + goal.currentAmount, 0);
+  
+  // Calculate the remaining balance by subtracting all outflows from the total income
+  const remainingBalance = totalIncome - (totalExpenses + totalLoanPayments + totalSavings);
+  
+  // Combine all context values
+  const contextValue: AppContextType = {
+    // Profile
+    profileExists: profileContext.profileExists,
+    ensureProfileExists: profileContext.ensureProfileExists,
+    logout: profileContext.logout,
+    
+    // Saving Goals
+    savingGoals: savingGoalContext.savingGoals,
+    fetchSavingGoals: savingGoalContext.fetchSavingGoals,
+    addSavingGoal: savingGoalContext.addSavingGoal,
+    updateSavingGoal: savingGoalContext.updateSavingGoal,
+    deleteSavingGoal: savingGoalContext.deleteSavingGoal,
+    
+    // Loans
+    loans: loanContext.loans,
+    fetchLoans: loanContext.fetchLoans,
+    addLoan: loanContext.addLoan,
+    updateLoan: loanContext.updateLoan,
+    deleteLoan: loanContext.deleteLoan,
+    
+    // Income
+    income: incomeContext.income,
+    fetchIncome: incomeContext.fetchIncome,
+    addIncome: incomeContext.addIncome,
+    updateIncome: incomeContext.updateIncome,
+    deleteIncome: incomeContext.deleteIncome,
+    
+    // Expenses
+    expenses: expenseContext.expenses,
+    fetchExpenses: expenseContext.fetchExpenses,
+    addExpense: expenseContext.addExpense,
+    updateExpense: expenseContext.updateExpense,
+    deleteExpense: expenseContext.deleteExpense,
+    
+    // Budget
+    saveBudgetCategories: budgetContext.saveBudgetCategories,
+    
+    // Loading state
+    isLoading: isLoading || 
+               profileContext.isLoading || 
+               savingGoalContext.isLoading || 
+               loanContext.isLoading || 
+               incomeContext.isLoading || 
+               expenseContext.isLoading || 
+               budgetContext.isLoading,
+    
+    // Calculated values
+    totalIncome,
+    remainingBalance
+  };
+  
+  return (
+    <AppContext.Provider value={contextValue}>
+      {children}
+    </AppContext.Provider>
+  );
+}
+
 export const useAppContext = () => {
-  const context = React.useContext(CombinedContext);
+  const context = useContext(AppContext);
   if (context === undefined) {
     throw new Error('useAppContext must be used within an AppProvider');
   }

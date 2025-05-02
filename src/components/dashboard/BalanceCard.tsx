@@ -1,74 +1,91 @@
 
 import React from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Progress } from "@/components/ui/progress";
-import { IndianRupee } from "lucide-react";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Progress } from '@/components/ui/progress';
 import { useAppContext } from '@/contexts/AppContext';
+import { ArrowDownIcon, ArrowUpIcon } from 'lucide-react';
 
 const BalanceCard = () => {
-  const { totalIncome, expenses, savingGoals, loans, remainingBalance } = useAppContext();
-  
-  // Calculate all outgoings
+  const { 
+    totalIncome, 
+    expenses, 
+    loans, 
+    savingGoals, 
+    remainingBalance 
+  } = useAppContext();
+
+  // Calculate totals
   const totalExpenses = expenses.reduce((sum, expense) => sum + expense.amount, 0);
-  const totalSavings = savingGoals.reduce((sum, goal) => sum + goal.currentAmount, 0);
   const totalLoanPayments = loans.reduce((sum, loan) => sum + (loan.totalAmount - loan.remainingAmount), 0);
-  const totalSpent = totalExpenses + totalSavings + totalLoanPayments;
+  const totalSavings = savingGoals.reduce((sum, goal) => sum + goal.currentAmount, 0);
   
-  // Calculate percentage spent from total income
-  const percentSpent = totalIncome > 0 ? (totalSpent / totalIncome) * 100 : 0;
+  // Calculate total spending (all outgoing funds)
+  const totalSpent = totalExpenses + totalLoanPayments + totalSavings;
   
-  const formatCurrency = (amount: number) => {
+  // Progress percentage
+  const spentPercentage = totalIncome > 0 ? Math.min(100, (totalSpent / totalIncome) * 100) : 0;
+
+  // Format currency
+  const formatCurrency = (amount) => {
     return new Intl.NumberFormat('en-IN', {
       style: 'currency',
       currency: 'INR',
-      minimumFractionDigits: 2
+      maximumFractionDigits: 0
     }).format(amount);
   };
-  
+
   return (
-    <Card className="shadow-md">
-      <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0">
-        <CardTitle className="text-xl font-medium">Current Balance</CardTitle>
-        <IndianRupee className="w-5 h-5 text-muted-foreground" />
+    <Card>
+      <CardHeader className="pb-2">
+        <CardTitle className="text-2xl font-bold">Balance</CardTitle>
+        <CardDescription>Your current financial balance</CardDescription>
       </CardHeader>
       <CardContent>
-        <div className="text-3xl font-bold text-primary">
-          {formatCurrency(remainingBalance)}
+        <div className="grid grid-cols-2 gap-4">
+          <div className="space-y-1">
+            <p className="text-sm font-medium text-muted-foreground">Total Income</p>
+            <p className="text-2xl font-bold text-green-600">{formatCurrency(totalIncome)}</p>
+          </div>
+          <div className="space-y-1">
+            <p className="text-sm font-medium text-muted-foreground">Balance</p>
+            <p className="text-2xl font-bold text-primary">{formatCurrency(remainingBalance)}</p>
+          </div>
         </div>
-        
+
         <div className="mt-4 space-y-2">
-          <div className="flex items-center justify-between text-sm">
-            <span className="text-muted-foreground">Total Income:</span>
-            <span>{formatCurrency(totalIncome)}</span>
+          <div className="flex items-center justify-between">
+            <p className="text-sm font-medium">Total Spent</p>
+            <p className="text-sm font-medium text-red-500">{formatCurrency(totalSpent)}</p>
           </div>
-          <div className="flex items-center justify-between text-sm">
-            <span className="text-muted-foreground">Total Spent:</span>
-            <span>{formatCurrency(totalSpent)}</span>
-          </div>
+          <Progress value={spentPercentage} className="h-2" />
         </div>
-        
-        <div className="mt-4 space-y-1">
-          <div className="flex items-center justify-between text-sm">
-            <span className="text-muted-foreground">Spending</span>
-            <span className="text-muted-foreground">{percentSpent.toFixed(0)}%</span>
-          </div>
-          <Progress value={percentSpent} className="h-2" />
-        </div>
-        
-        <div className="mt-4 pt-4 border-t border-gray-200 dark:border-gray-700">
-          <p className="text-xs font-medium text-muted-foreground mb-2">Breakdown:</p>
-          <div className="space-y-1 text-xs">
-            <div className="flex items-center justify-between">
-              <span>Expenses:</span>
-              <span>{formatCurrency(totalExpenses)}</span>
+
+        <div className="mt-6 space-y-2">
+          <h4 className="text-sm font-medium">Breakdown</h4>
+          
+          <div className="grid grid-cols-1 gap-2">
+            <div className="flex items-center justify-between rounded-lg bg-muted/50 p-2">
+              <div className="flex items-center">
+                <div className="mr-2 h-4 w-4 rounded bg-red-400" />
+                <span className="text-sm">Expenses</span>
+              </div>
+              <span className="text-sm font-medium">{formatCurrency(totalExpenses)}</span>
             </div>
-            <div className="flex items-center justify-between">
-              <span>Savings Goals:</span>
-              <span>{formatCurrency(totalSavings)}</span>
+            
+            <div className="flex items-center justify-between rounded-lg bg-muted/50 p-2">
+              <div className="flex items-center">
+                <div className="mr-2 h-4 w-4 rounded bg-blue-400" />
+                <span className="text-sm">Loan Payments</span>
+              </div>
+              <span className="text-sm font-medium">{formatCurrency(totalLoanPayments)}</span>
             </div>
-            <div className="flex items-center justify-between">
-              <span>Loan Payments:</span>
-              <span>{formatCurrency(totalLoanPayments)}</span>
+            
+            <div className="flex items-center justify-between rounded-lg bg-muted/50 p-2">
+              <div className="flex items-center">
+                <div className="mr-2 h-4 w-4 rounded bg-purple-400" />
+                <span className="text-sm">Savings</span>
+              </div>
+              <span className="text-sm font-medium">{formatCurrency(totalSavings)}</span>
             </div>
           </div>
         </div>

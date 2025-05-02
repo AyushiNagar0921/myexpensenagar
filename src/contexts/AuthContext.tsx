@@ -55,15 +55,46 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const signUp = async (email: string, password: string, userData?: { username?: string; avatar_url?: string }) => {
     try {
-      const { error } = await supabase.auth.signUp({ 
+      // Sign up without email verification by using signInWithPassword directly after sign up
+      const { error: signUpError, data } = await supabase.auth.signUp({ 
         email, 
         password,
         options: {
           data: userData
         }
       });
-      if (error) throw error;
-      toast.success('Signed up successfully. Please check your email for verification.');
+      
+      if (signUpError) throw signUpError;
+      
+      // If signup is successful, immediately sign in the user
+      if (data.user) {
+        // If user profile data was provided, save it to profiles table
+        if (userData && (userData.username || userData.avatar_url)) {
+          const { error: profileError } = await supabase
+            .from('profiles')
+            .upsert({ 
+              id: data.user.id,
+              username: userData.username,
+              avatar_url: userData.avatar_url 
+            });
+          
+          if (profileError) {
+            console.error('Error saving profile data:', profileError);
+          }
+        }
+        
+        // Auto sign in after signup
+        const { error: signInError } = await supabase.auth.signInWithPassword({
+          email, 
+          password
+        });
+        
+        if (signInError) throw signInError;
+        
+        toast.success('Signed up successfully and logged in');
+      } else {
+        toast.error('Failed to create account');
+      }
     } catch (error: any) {
       toast.error(error.message || 'Failed to sign up');
       throw error;
@@ -83,11 +114,25 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const updateUserProfile = async (data: { username?: string; avatar_url?: string | null }) => {
     try {
-      const { error } = await supabase.auth.updateUser({
+      if (!user) throw new Error('No user logged in');
+      
+      // Update auth metadata
+      const { error: authError } = await supabase.auth.updateUser({
         data
       });
       
-      if (error) throw error;
+      if (authError) throw authError;
+      
+      // Also update the profiles table
+      const { error: profileError } = await supabase
+        .from('profiles')
+        .upsert({ 
+          id: user.id,
+          username: data.username,
+          avatar_url: data.avatar_url 
+        });
+      
+      if (profileError) throw profileError;
       
       toast.success('Profile updated successfully');
     } catch (error: any) {

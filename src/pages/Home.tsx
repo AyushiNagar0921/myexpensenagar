@@ -1,128 +1,109 @@
-import React, { useEffect, useState } from 'react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { useAuth } from '@/contexts/AuthContext';
-import { useAppContext } from '@/contexts/AppContext';
-import { useNavigate } from 'react-router-dom';
-import IncomeSetupForm from '@/components/auth/IncomeSetupForm';
-import BudgetSetupPrompt from '@/components/budget/BudgetSetupPrompt';
+
+import React, { useState, useEffect } from 'react';
+import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from '@/components/ui/sheet';
 import BalanceCard from '@/components/dashboard/BalanceCard';
-import CategoryBreakdown from '@/components/dashboard/CategoryBreakdown';
 import RecentExpenses from '@/components/dashboard/RecentExpenses';
-import SavingsGoalCard from '@/components/dashboard/SavingsGoalsCard';
+import CategoryBreakdown from '@/components/dashboard/CategoryBreakdown';
+import SavingsGoalsCard from '@/components/dashboard/SavingsGoalsCard';
 import ActiveLoans from '@/components/dashboard/ActiveLoans';
+import BudgetSetupPrompt from '@/components/budget/BudgetSetupPrompt';
+import BudgetSetupForm from '@/components/budget/BudgetSetupForm';
+import { useAppContext } from '@/contexts/AppContext';
+import { supabase } from '@/integrations/supabase/client';
 
 const Home = () => {
-  const { user, isLoading: authLoading } = useAuth();
-  const { incomes, expenses, loans, isLoading: dataLoading } = useAppContext();
-  const navigate = useNavigate();
-  const [spentPercentage, setSpentPercentage] = useState(0);
-  const [showBudgetPrompt, setShowBudgetPrompt] = useState(false);
+  const [showBudgetSetup, setShowBudgetSetup] = useState(false);
+  const [hasBudget, setHasBudget] = useState(false);
+  const { ensureProfileExists, isLoading } = useAppContext();
   
   useEffect(() => {
-    if (!authLoading && !user) {
-      navigate('/auth');
-    }
-  }, [user, authLoading, navigate]);
-  
-  useEffect(() => {
-    if (incomes && incomes.length > 0 && expenses && expenses.length > 0) {
-      const totalIncome = incomes.reduce((sum, income) => sum + income.amount, 0);
-      const totalSpent = expenses.reduce((sum, expense) => sum + expense.amount, 0);
-      setSpentPercentage(Math.round((totalSpent / totalIncome) * 100));
-    } else {
-      setSpentPercentage(0);
-    }
-  }, [incomes, expenses]);
-  
-  // Check if the budget prompt should be shown based on user preferences
-  useEffect(() => {
-    if (incomes && incomes.length > 0) {
-      const lastPromptDate = localStorage.getItem('lastBudgetPromptDate');
-      const schedulePreference = localStorage.getItem('budgetSetupSchedule') || 'never';
+    // Check if the user has a budget set up
+    const checkBudget = async () => {
+      // Ensure profile exists first
+      await ensureProfileExists();
       
-      if (schedulePreference === 'never') {
-        setShowBudgetPrompt(false);
-        return;
-      }
+      // Get user session for user_id
+      const { data: userData } = await supabase.auth.getUser();
+      if (!userData?.user) return;
       
-      if (!lastPromptDate) {
-        // First time, show the prompt
-        setShowBudgetPrompt(true);
-        return;
-      }
+      // Check if user has any budget categories
+      const { data, error } = await supabase
+        .from('budget_categories')
+        .select('id')
+        .eq('user_id', userData.user.id)
+        .limit(1);
       
-      const today = new Date();
-      const lastDate = new Date(lastPromptDate);
-      
-      if (schedulePreference === 'daily') {
-        // Show daily if last prompt was yesterday or earlier
-        if (today.getDate() !== lastDate.getDate() || 
-            today.getMonth() !== lastDate.getMonth() || 
-            today.getFullYear() !== lastDate.getFullYear()) {
-          setShowBudgetPrompt(true);
-        }
-      } else if (schedulePreference === 'weekly') {
-        // Show weekly if it's been 7 or more days
-        const diffTime = Math.abs(today.getTime() - lastDate.getTime());
-        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-        if (diffDays >= 7) {
-          setShowBudgetPrompt(true);
-        }
-      } else if (schedulePreference === 'monthly') {
-        // Show monthly if it's been a month or more
-        if (today.getMonth() !== lastDate.getMonth() || 
-            today.getFullYear() !== lastDate.getFullYear()) {
-          setShowBudgetPrompt(true);
+      if (!error && data && data.length > 0) {
+        setHasBudget(true);
+      } else {
+        // Check if user has dismissed the budget prompt
+        const dismissedBudget = localStorage.getItem('budgetSetupDismissed');
+        if (!dismissedBudget) {
+          setShowBudgetSetup(true);
         }
       }
+    };
+    
+    if (!isLoading) {
+      checkBudget();
     }
-  }, [incomes]);
+  }, [ensureProfileExists, isLoading]);
   
-  const handleBudgetPromptComplete = () => {
-    setShowBudgetPrompt(false);
-    localStorage.setItem('lastBudgetPromptDate', new Date().toISOString());
+  const handleBudgetSetupComplete = () => {
+    setShowBudgetSetup(false);
+    setHasBudget(true);
   };
   
-  if (authLoading || dataLoading) {
-    return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="text-center">
-          <h2 className="text-2xl font-semibold">Loading...</h2>
-        </div>
-      </div>
-    );
-  }
-  
-  if (!user) {
-    return null;
-  }
-  
-  if (!incomes || incomes.length === 0) {
-    return <IncomeSetupForm />;
-  }
-
-  if (showBudgetPrompt) {
-    return <BudgetSetupPrompt onComplete={handleBudgetPromptComplete} />;
-  }
+  const handleBudgetSetupDismiss = () => {
+    localStorage.setItem('budgetSetupDismissed', 'true');
+    setShowBudgetSetup(false);
+  };
   
   return (
-    <div className="container mx-auto py-6">
-      <h2 className="text-3xl font-bold mb-6">Dashboard</h2>
+    <div className="space-y-6">
+      <h2 className="text-3xl font-bold tracking-tight">Dashboard</h2>
       
-      <div className="grid gap-6 md:grid-cols-2">
-        {/* Left column */}
-        <div className="space-y-6">
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+        <div className="col-span-full md:col-span-2">
           <BalanceCard />
-          <CategoryBreakdown />
         </div>
         
-        {/* Right column */}
-        <div className="space-y-6">
+        <div className="col-span-full md:col-span-1">
+          <SavingsGoalsCard />
+        </div>
+        
+        <div className="col-span-full md:col-span-2">
           <RecentExpenses />
-          <SavingsGoalCard />
-          {loans && loans.length > 0 && <ActiveLoans />}
+        </div>
+        
+        <div className="col-span-full md:col-span-1">
+          <ActiveLoans />
+        </div>
+        
+        <div className="col-span-full">
+          <CategoryBreakdown />
         </div>
       </div>
+      
+      {/* Budget Setup Prompt */}
+      {showBudgetSetup && (
+        <Sheet open={showBudgetSetup} onOpenChange={setShowBudgetSetup}>
+          <SheetContent className="sm:max-w-xl">
+            <SheetHeader>
+              <SheetTitle>Budget Setup</SheetTitle>
+              <SheetDescription>
+                Let's set up your budget to help you manage your finances
+              </SheetDescription>
+            </SheetHeader>
+            <div className="mt-6">
+              <BudgetSetupForm
+                onComplete={handleBudgetSetupComplete}
+                onDismiss={handleBudgetSetupDismiss}
+              />
+            </div>
+          </SheetContent>
+        </Sheet>
+      )}
     </div>
   );
 };

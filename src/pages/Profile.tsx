@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -231,26 +230,31 @@ const Profile = () => {
               <Button onClick={handleUpdateProfile} disabled={isUpdating} className="w-full">
                 {isUpdating ? 'Updating Profile...' : 'Update Profile'}
               </Button>
-              
-              <div className="pt-4">
-                <Dialog open={isAddingSaving} onOpenChange={setIsAddingSaving}>
-                  <DialogTrigger asChild>
-                    <Button variant="outline" className="w-full flex items-center gap-2">
-                      <PiggyBank className="h-4 w-4" />
-                      <span>Add Saving Goal</span>
-                    </Button>
-                  </DialogTrigger>
-                  <DialogContent>
-                    <DialogHeader>
-                      <DialogTitle>Add New Saving Goal</DialogTitle>
-                      <DialogDescription>
-                        Create a new saving goal to track your progress
-                      </DialogDescription>
-                    </DialogHeader>
-                    <GoalForm onClose={handleAddSavingComplete} />
-                  </DialogContent>
-                </Dialog>
-              </div>
+            </CardContent>
+          </Card>
+          
+          <Card className="mt-4">
+            <CardHeader>
+              <CardTitle>Add Saving Goal</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <Dialog open={isAddingSaving} onOpenChange={setIsAddingSaving}>
+                <DialogTrigger asChild>
+                  <Button className="w-full flex items-center gap-2">
+                    <PiggyBank className="h-4 w-4" />
+                    <span>Add New Saving Goal</span>
+                  </Button>
+                </DialogTrigger>
+                <DialogContent>
+                  <DialogHeader>
+                    <DialogTitle>Add New Saving Goal</DialogTitle>
+                    <DialogDescription>
+                      Create a new saving goal to track your progress
+                    </DialogDescription>
+                  </DialogHeader>
+                  <GoalForm onClose={handleAddSavingComplete} />
+                </DialogContent>
+              </Dialog>
             </CardContent>
           </Card>
         </TabsContent>
@@ -302,6 +306,26 @@ const Profile = () => {
                   <span className="text-primary font-bold">
                     {formatCurrency(remainingBalance)}
                   </span>
+                </div>
+                
+                <div className="flex justify-center mt-4">
+                  <Dialog open={isAddingSaving} onOpenChange={setIsAddingSaving}>
+                    <DialogTrigger asChild>
+                      <Button className="flex items-center gap-2">
+                        <PiggyBank className="h-4 w-4" />
+                        <span>Add New Saving Goal</span>
+                      </Button>
+                    </DialogTrigger>
+                    <DialogContent>
+                      <DialogHeader>
+                        <DialogTitle>Add New Saving Goal</DialogTitle>
+                        <DialogDescription>
+                          Create a new saving goal to track your progress
+                        </DialogDescription>
+                      </DialogHeader>
+                      <GoalForm onClose={handleAddSavingComplete} />
+                    </DialogContent>
+                  </Dialog>
                 </div>
               </div>
             </CardContent>
