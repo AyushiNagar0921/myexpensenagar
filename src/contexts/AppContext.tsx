@@ -22,6 +22,7 @@ interface AppContextType {
   savingGoals: ReturnType<typeof useSavingGoalContext>['savingGoals'];
   loans: ReturnType<typeof useLoanContext>['loans'];
   income?: ReturnType<typeof useIncomeContext>['income'];
+  totalIncome: ReturnType<typeof useIncomeContext>['totalIncome'];
   remainingBalance: number;
   addIncome: ReturnType<typeof useIncomeContext>['addIncome'];
   setIncome: (incomeData: Omit<ReturnType<typeof useIncomeContext>['incomes'][0], "id">) => Promise<void>;
@@ -47,7 +48,7 @@ const CombinedContext = React.createContext<AppContextType | undefined>(undefine
 function CombinedProvider({ children }: { children: React.ReactNode }) {
   // Get data from all contexts
   const { 
-    incomes, income, addIncome, fetchIncomes, isLoading: incomeLoading 
+    incomes, income, totalIncome, addIncome, fetchIncomes, isLoading: incomeLoading 
   } = useIncomeContext();
   
   const { 
@@ -70,10 +71,12 @@ function CombinedProvider({ children }: { children: React.ReactNode }) {
     profileExists, ensureProfileExists, logout, isLoading: profileLoading 
   } = useProfileContext();
   
-  // Calculate remaining balance
-  const totalIncome = income ? income.amount : 0;
-  const totalSpent = expenses.reduce((sum, expense) => sum + expense.amount, 0);
-  const remainingBalance = totalIncome - totalSpent;
+  // Calculate remaining balance by subtracting expenses, savings contributions, and loan payments
+  const totalExpenses = expenses.reduce((sum, expense) => sum + expense.amount, 0);
+  const totalSavingsContributions = savingGoals.reduce((sum, goal) => sum + goal.currentAmount, 0);
+  const totalLoanPayments = loans.reduce((sum, loan) => sum + (loan.totalAmount - loan.remainingAmount), 0);
+  
+  const remainingBalance = totalIncome - (totalExpenses + totalSavingsContributions + totalLoanPayments);
   
   // Determine combined loading state
   const isLoading = incomeLoading || expenseLoading || goalLoading || 
@@ -107,6 +110,7 @@ function CombinedProvider({ children }: { children: React.ReactNode }) {
         savingGoals,
         loans,
         income,
+        totalIncome,
         remainingBalance,
         addIncome,
         setIncome,

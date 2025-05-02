@@ -2,15 +2,17 @@
 import React, { useState, useEffect } from 'react';
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog";
-import { Plus } from "lucide-react";
+import { Plus, User } from "lucide-react";
 import { useAppContext } from '@/contexts/AppContext';
 import GoalCard from '@/components/goals/GoalCard';
 import GoalForm from '@/components/goals/GoalForm';
 import { Skeleton } from "@/components/ui/skeleton";
+import { useNavigate } from 'react-router-dom';
 
 const SavingGoals = () => {
   const { savingGoals, deleteSavingGoal, isLoading, ensureProfileExists } = useAppContext();
   const [isAddingGoal, setIsAddingGoal] = useState(false);
+  const navigate = useNavigate();
   
   useEffect(() => {
     // Ensure profile exists when component mounts
@@ -39,17 +41,27 @@ const SavingGoals = () => {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <h2 className="text-3xl font-bold tracking-tight">Saving Goals</h2>
-        <Dialog open={isAddingGoal} onOpenChange={setIsAddingGoal}>
-          <DialogTrigger asChild>
-            <Button className="flex items-center gap-2">
-              <Plus className="h-4 w-4" />
-              <span>Add Goal</span>
-            </Button>
-          </DialogTrigger>
-          <DialogContent>
-            <GoalForm onClose={() => setIsAddingGoal(false)} />
-          </DialogContent>
-        </Dialog>
+        <div className="flex items-center gap-2">
+          <Dialog open={isAddingGoal} onOpenChange={setIsAddingGoal}>
+            <DialogTrigger asChild>
+              <Button className="flex items-center gap-2">
+                <Plus className="h-4 w-4" />
+                <span>Add Goal</span>
+              </Button>
+            </DialogTrigger>
+            <DialogContent>
+              <GoalForm onClose={() => setIsAddingGoal(false)} />
+            </DialogContent>
+          </Dialog>
+          <Button 
+            variant="ghost" 
+            size="icon"
+            onClick={() => navigate('/profile')}
+            className="md:hidden"
+          >
+            <User className="h-5 w-5" />
+          </Button>
+        </div>
       </div>
       
       {savingGoals.length === 0 ? (

@@ -2,15 +2,17 @@
 import React, { useState, useEffect } from 'react';
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog";
-import { Plus } from "lucide-react";
+import { Plus, User } from "lucide-react";
 import { useAppContext } from '@/contexts/AppContext';
 import LoanCard from '@/components/loans/LoanCard';
 import LoanForm from '@/components/loans/LoanForm';
 import { Skeleton } from "@/components/ui/skeleton";
+import { useNavigate } from 'react-router-dom';
 
 const Loans = () => {
   const { loans, deleteLoan, isLoading, ensureProfileExists } = useAppContext();
   const [isAddingLoan, setIsAddingLoan] = useState(false);
+  const navigate = useNavigate();
   
   useEffect(() => {
     // Ensure profile exists when component mounts
@@ -39,17 +41,27 @@ const Loans = () => {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <h2 className="text-3xl font-bold tracking-tight">Loans & EMIs</h2>
-        <Dialog open={isAddingLoan} onOpenChange={setIsAddingLoan}>
-          <DialogTrigger asChild>
-            <Button className="flex items-center gap-2">
-              <Plus className="h-4 w-4" />
-              <span>Add Loan</span>
-            </Button>
-          </DialogTrigger>
-          <DialogContent>
-            <LoanForm onClose={() => setIsAddingLoan(false)} />
-          </DialogContent>
-        </Dialog>
+        <div className="flex items-center gap-2">
+          <Dialog open={isAddingLoan} onOpenChange={setIsAddingLoan}>
+            <DialogTrigger asChild>
+              <Button className="flex items-center gap-2">
+                <Plus className="h-4 w-4" />
+                <span>Add Loan</span>
+              </Button>
+            </DialogTrigger>
+            <DialogContent>
+              <LoanForm onClose={() => setIsAddingLoan(false)} />
+            </DialogContent>
+          </Dialog>
+          <Button 
+            variant="ghost" 
+            size="icon"
+            onClick={() => navigate('/profile')}
+            className="md:hidden"
+          >
+            <User className="h-5 w-5" />
+          </Button>
+        </div>
       </div>
       
       {!loans || loans.length === 0 ? (

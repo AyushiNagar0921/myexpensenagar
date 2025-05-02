@@ -6,10 +6,9 @@ import { IndianRupee } from "lucide-react";
 import { useAppContext } from '@/contexts/AppContext';
 
 const BalanceCard = () => {
-  const { income, expenses, remainingBalance } = useAppContext();
+  const { totalIncome, expenses, savingGoals, loans, remainingBalance } = useAppContext();
   
   // Calculate percentage spent
-  const totalIncome = income?.amount || 0;
   const totalSpent = expenses.reduce((sum, expense) => sum + expense.amount, 0);
   const percentSpent = totalIncome > 0 ? (totalSpent / totalIncome) * 100 : 0;
   
@@ -34,7 +33,7 @@ const BalanceCard = () => {
         
         <div className="mt-4 space-y-2">
           <div className="flex items-center justify-between text-sm">
-            <span className="text-muted-foreground">Monthly Income:</span>
+            <span className="text-muted-foreground">Total Income:</span>
             <span>{formatCurrency(totalIncome)}</span>
           </div>
           <div className="flex items-center justify-between text-sm">
