@@ -1,10 +1,10 @@
-
 import React, { useState } from 'react';
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useAppContext } from '@/contexts/AppContext';
-import { useExpenseContext, ExpenseCategory } from '@/contexts/ExpenseContext';
+import { ExpenseCategory } from './types';
+import { useExpenseContext } from '@/contexts/ExpenseContext';
 import { useIncomeContext } from '@/contexts/IncomeContext';
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
@@ -48,7 +48,7 @@ const getCategoryColorClass = (category: ExpenseCategory) => {
 
 const TransactionsTable = () => {
   const { expenses, deleteExpense } = useAppContext();
-  const { income } = useIncomeContext();
+  const { income } = useAppContext();
   const [categoryFilter, setCategoryFilter] = useState<ExpenseCategory | 'all'>('all');
   const [searchQuery, setSearchQuery] = useState('');
   const [dateRange, setDateRange] = useState<DataRange>({ from: undefined, to: undefined });
@@ -56,7 +56,7 @@ const TransactionsTable = () => {
   const [transactionType, setTransactionType] = useState('all'); // 'all', 'expense', 'income'
   
   // Create a combined array of income and expense transactions
-  const allIncome = income ? income.map(incomeItem => ({
+  const allIncome = Array.isArray(income) ? income.map(incomeItem => ({
     id: incomeItem.id,
     amount: incomeItem.amount,
     description: incomeItem.description || 'Monthly Income',

@@ -10,6 +10,11 @@ import { useBudgetContext, BudgetProvider } from './BudgetContext';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 
+// Import the types from their respective contexts
+import { SavingGoal } from './SavingGoalContext';
+import { Loan } from './LoanContext';
+import { Income } from './IncomeContext';
+
 interface AppContextType {
   // Profile
   profileExists: boolean;
@@ -17,25 +22,29 @@ interface AppContextType {
   logout: () => Promise<void>;
   
   // Saving Goals
-  savingGoals: any[];
+  savingGoals: SavingGoal[];
   fetchSavingGoals: () => Promise<void>;
-  addSavingGoal: (goal: any) => Promise<void>;
-  updateSavingGoal: (id: string, goal: any) => Promise<void>;
+  addSavingGoal: (goal: Omit<SavingGoal, "id">) => Promise<void>;
+  updateSavingGoal: (goal: SavingGoal) => Promise<void>;
+  updateSavingGoalAmount: (id: string, amount: number) => Promise<void>;
   deleteSavingGoal: (id: string) => Promise<void>;
   
   // Loans
-  loans: any[];
+  loans: Loan[];
   fetchLoans: () => Promise<void>;
-  addLoan: (loan: any) => Promise<void>;
+  addLoan: (loan: Omit<Loan, "id">) => Promise<void>;
   updateLoan: (id: string, loan: any) => Promise<void>;
+  updateLoanPayment: (id: string, amount: number) => Promise<void>;
   deleteLoan: (id: string) => Promise<void>;
   
   // Income
-  income: any[];
+  income: Income[];
+  incomes: Income[];
   fetchIncome: () => Promise<void>;
-  addIncome: (income: any) => Promise<void>;
+  addIncome: (income: Omit<Income, "id">) => Promise<void>;
   updateIncome: (id: string, income: any) => Promise<void>;
   deleteIncome: (id: string) => Promise<void>;
+  setIncome: (income: Omit<Income, "id">) => Promise<void>;
   
   // Expenses
   expenses: Expense[];
@@ -117,8 +126,8 @@ function AppContextWrapper({ children }: { children: React.ReactNode }) {
   }, [user]);
   
   // Calculate total income
-  const totalIncome = Array.isArray(incomeContext.income) ? 
-    incomeContext.income.reduce((sum: number, inc: any) => sum + inc.amount, 0) : 0;
+  const totalIncome = Array.isArray(incomeContext.incomes) ? 
+    incomeContext.incomes.reduce((sum: number, inc: Income) => sum + inc.amount, 0) : 0;
   
   // Calculate total expenses
   const totalExpenses = expenseContext.expenses.reduce((sum, expense) => sum + expense.amount, 0);
@@ -144,21 +153,25 @@ function AppContextWrapper({ children }: { children: React.ReactNode }) {
     fetchSavingGoals: savingGoalContext.fetchSavingGoals,
     addSavingGoal: savingGoalContext.addSavingGoal,
     updateSavingGoal: savingGoalContext.updateSavingGoal,
+    updateSavingGoalAmount: savingGoalContext.updateSavingGoalAmount,
     deleteSavingGoal: savingGoalContext.deleteSavingGoal,
     
     // Loans
     loans: loanContext.loans,
     fetchLoans: loanContext.fetchLoans,
     addLoan: loanContext.addLoan,
-    updateLoan: loanContext.updateLoanPayment, // Fixed: updateLoan -> updateLoanPayment
+    updateLoan: loanContext.updateLoan,
+    updateLoanPayment: loanContext.updateLoanPayment,
     deleteLoan: loanContext.deleteLoan,
     
     // Income
-    income: incomeContext.income,
-    fetchIncome: incomeContext.fetchIncomes, // Fixed: fetchIncome -> fetchIncomes
+    income: incomeContext.incomes,
+    incomes: incomeContext.incomes,
+    fetchIncome: incomeContext.fetchIncomes,
     addIncome: incomeContext.addIncome,
-    updateIncome: incomeContext.updateIncome, // This needs to be added to IncomeContext
-    deleteIncome: incomeContext.deleteIncome, // This needs to be added to IncomeContext
+    updateIncome: (id, income) => Promise.resolve(), // Placeholder until implemented in IncomeContext
+    deleteIncome: (id) => Promise.resolve(), // Placeholder until implemented in IncomeContext
+    setIncome: incomeContext.addIncome,
     
     // Expenses
     expenses: expenseContext.expenses,
@@ -197,3 +210,5 @@ export const useAppContext = () => {
   }
   return context;
 };
+
+export { SavingGoal, Loan, Income };

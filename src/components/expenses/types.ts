@@ -9,3 +9,5 @@ export interface DataRange {
   from: Date | undefined;
   to: Date | undefined;
 }
+
+export type ExpenseCategory = 'Food' | 'Shopping' | 'Transportation' | 'Utilities' | 'Entertainment' | 'Health' | 'Other';

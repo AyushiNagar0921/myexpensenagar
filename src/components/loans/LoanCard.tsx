@@ -7,7 +7,8 @@ import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { format } from "date-fns";
-import { Loan, useAppContext } from '@/contexts/AppContext';
+import { useAppContext } from '@/contexts/AppContext';
+import { Loan } from '@/contexts/LoanContext';
 import { toast } from "sonner";
 
 interface LoanCardProps {

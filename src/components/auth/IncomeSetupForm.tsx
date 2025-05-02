@@ -10,7 +10,7 @@ import { IndianRupee } from 'lucide-react';
 
 const IncomeSetupForm = () => {
   const navigate = useNavigate();
-  const { setIncome } = useAppContext();
+  const { addIncome } = useAppContext();
   const [amount, setAmount] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   
@@ -24,7 +24,7 @@ const IncomeSetupForm = () => {
     setIsLoading(true);
     
     try {
-      await setIncome({
+      await addIncome({
         amount: parseFloat(amount),
         date: new Date(),
         description: 'Monthly Income'

@@ -7,7 +7,8 @@ import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { format } from "date-fns";
-import { SavingGoal, useAppContext } from '@/contexts/AppContext';
+import { useAppContext } from '@/contexts/AppContext';
+import { SavingGoal } from '@/contexts/SavingGoalContext';
 import { toast } from "sonner";
 
 interface GoalCardProps {
