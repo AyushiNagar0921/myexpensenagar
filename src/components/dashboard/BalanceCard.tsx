@@ -8,8 +8,13 @@ import { useAppContext } from '@/contexts/AppContext';
 const BalanceCard = () => {
   const { totalIncome, expenses, savingGoals, loans, remainingBalance } = useAppContext();
   
-  // Calculate percentage spent
-  const totalSpent = expenses.reduce((sum, expense) => sum + expense.amount, 0);
+  // Calculate all outgoings
+  const totalExpenses = expenses.reduce((sum, expense) => sum + expense.amount, 0);
+  const totalSavings = savingGoals.reduce((sum, goal) => sum + goal.currentAmount, 0);
+  const totalLoanPayments = loans.reduce((sum, loan) => sum + (loan.totalAmount - loan.remainingAmount), 0);
+  const totalSpent = totalExpenses + totalSavings + totalLoanPayments;
+  
+  // Calculate percentage spent from total income
   const percentSpent = totalIncome > 0 ? (totalSpent / totalIncome) * 100 : 0;
   
   const formatCurrency = (amount: number) => {
@@ -48,6 +53,24 @@ const BalanceCard = () => {
             <span className="text-muted-foreground">{percentSpent.toFixed(0)}%</span>
           </div>
           <Progress value={percentSpent} className="h-2" />
+        </div>
+        
+        <div className="mt-4 pt-4 border-t border-gray-200 dark:border-gray-700">
+          <p className="text-xs font-medium text-muted-foreground mb-2">Breakdown:</p>
+          <div className="space-y-1 text-xs">
+            <div className="flex items-center justify-between">
+              <span>Expenses:</span>
+              <span>{formatCurrency(totalExpenses)}</span>
+            </div>
+            <div className="flex items-center justify-between">
+              <span>Savings Goals:</span>
+              <span>{formatCurrency(totalSavings)}</span>
+            </div>
+            <div className="flex items-center justify-between">
+              <span>Loan Payments:</span>
+              <span>{formatCurrency(totalLoanPayments)}</span>
+            </div>
+          </div>
         </div>
       </CardContent>
     </Card>

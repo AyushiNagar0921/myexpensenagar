@@ -15,7 +15,7 @@ export interface Income {
 interface IncomeContextType {
   incomes: Income[];
   income?: Income;
-  totalIncome: number;  // Add totalIncome property
+  totalIncome: number;
   addIncome: (income: Omit<Income, "id">) => Promise<void>;
   setIncomes: React.Dispatch<React.SetStateAction<Income[]>>;
   fetchIncomes: () => Promise<void>;
@@ -32,7 +32,7 @@ export function IncomeProvider({ children }: { children: React.ReactNode }) {
   // Get the latest income
   const income = incomes.length > 0 ? incomes[0] : undefined;
   
-  // Calculate total income
+  // Calculate total income from all income sources
   const totalIncome = incomes.reduce((sum, income) => sum + income.amount, 0);
   
   const fetchIncomes = async () => {
@@ -87,10 +87,13 @@ export function IncomeProvider({ children }: { children: React.ReactNode }) {
       
       if (error) throw error;
       
-      setIncomes((prevIncomes) => [...prevIncomes, {
-        ...data,
-        date: new Date(data.date)
-      }]);
+      setIncomes((prevIncomes) => [
+        {
+          ...data,
+          date: new Date(data.date)
+        },
+        ...prevIncomes,
+      ]);
       toast.success('Income added successfully!');
     } catch (error: any) {
       console.error('Error adding income:', error);
@@ -106,7 +109,7 @@ export function IncomeProvider({ children }: { children: React.ReactNode }) {
       value={{
         incomes,
         income,
-        totalIncome,  // Add totalIncome to the provider
+        totalIncome,
         addIncome,
         setIncomes,
         fetchIncomes,

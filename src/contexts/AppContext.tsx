@@ -40,7 +40,7 @@ interface AppContextType {
   isLoading: boolean;
   profileExists: ReturnType<typeof useProfileContext>['profileExists'];
   ensureProfileExists: ReturnType<typeof useProfileContext>['ensureProfileExists'];
-  EXPENSE_CATEGORIES: typeof EXPENSE_CATEGORIES; // Add this to the interface
+  EXPENSE_CATEGORIES: typeof EXPENSE_CATEGORIES;
 }
 
 const CombinedContext = React.createContext<AppContextType | undefined>(undefined);
@@ -71,12 +71,14 @@ function CombinedProvider({ children }: { children: React.ReactNode }) {
     profileExists, ensureProfileExists, logout, isLoading: profileLoading 
   } = useProfileContext();
   
-  // Calculate remaining balance by subtracting expenses, savings contributions, and loan payments
+  // Calculate total outgoings
   const totalExpenses = expenses.reduce((sum, expense) => sum + expense.amount, 0);
-  const totalSavingsContributions = savingGoals.reduce((sum, goal) => sum + goal.currentAmount, 0);
+  const totalSavings = savingGoals.reduce((sum, goal) => sum + goal.currentAmount, 0);
   const totalLoanPayments = loans.reduce((sum, loan) => sum + (loan.totalAmount - loan.remainingAmount), 0);
   
-  const remainingBalance = totalIncome - (totalExpenses + totalSavingsContributions + totalLoanPayments);
+  // Calculate remaining balance by subtracting all outgoings from total income
+  const totalOutgoings = totalExpenses + totalSavings + totalLoanPayments;
+  const remainingBalance = totalIncome - totalOutgoings;
   
   // Determine combined loading state
   const isLoading = incomeLoading || expenseLoading || goalLoading || 
@@ -128,7 +130,7 @@ function CombinedProvider({ children }: { children: React.ReactNode }) {
         isLoading,
         profileExists,
         ensureProfileExists,
-        EXPENSE_CATEGORIES, // Add this to the provider value
+        EXPENSE_CATEGORIES,
       }}
     >
       {children}

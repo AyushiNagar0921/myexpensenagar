@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -8,17 +8,21 @@ import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { IndianRupee, LogOut, Settings, User as UserIcon } from "lucide-react";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { IndianRupee, LogOut, PiggyBank, Plus, Settings, User as UserIcon } from "lucide-react";
 import { useAuth } from '@/contexts/AuthContext';
 import { useAppContext } from '@/contexts/AppContext';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { Skeleton } from "@/components/ui/skeleton";
 import BudgetSetupForm from '@/components/budget/BudgetSetupForm';
+import { useNavigate } from 'react-router-dom';
+import GoalForm from '@/components/goals/GoalForm';
 
 const Profile = () => {
   const { user: authUser, updateUserProfile } = useAuth();
-  const { income, expenses, loans, savingGoals, isLoading, logout } = useAppContext();
+  const { income, expenses, loans, savingGoals, isLoading, logout, totalIncome, remainingBalance } = useAppContext();
+  const navigate = useNavigate();
   
   const [username, setUsername] = useState(authUser?.user_metadata?.username || '');
   const [isUpdating, setIsUpdating] = useState(false);
@@ -26,6 +30,17 @@ const Profile = () => {
   const [uploading, setUploading] = useState(false);
   const [budgetPromptSchedule, setBudgetPromptSchedule] = useState(localStorage.getItem('budgetSetupSchedule') || 'never');
   const [showBudgetSetup, setShowBudgetSetup] = useState(false);
+  const [isAddingSaving, setIsAddingSaving] = useState(false);
+  
+  // Update username and avatar from auth user when component mounts
+  useEffect(() => {
+    if (authUser?.user_metadata?.username) {
+      setUsername(authUser.user_metadata.username);
+    }
+    if (authUser?.user_metadata?.avatar_url) {
+      setAvatarUrl(authUser.user_metadata.avatar_url);
+    }
+  }, [authUser]);
   
   const handleUpdateProfile = async () => {
     if (!authUser) return;
@@ -90,6 +105,11 @@ const Profile = () => {
     setShowBudgetSetup(false);
     toast.success('Budget preferences saved');
   };
+  
+  const handleAddSavingComplete = () => {
+    setIsAddingSaving(false);
+    toast.success('Saving goal added');
+  };
 
   const handleLogout = () => {
     logout();
@@ -109,7 +129,7 @@ const Profile = () => {
   const totalExpenses = expenses.reduce((sum, expense) => sum + expense.amount, 0);
   
   // Calculate total loan payments
-  const totalLoanPayments = loans.reduce((sum, loan) => sum + loan.monthlyPayment, 0);
+  const totalLoanPayments = loans.reduce((sum, loan) => sum + (loan.totalAmount - loan.remainingAmount), 0);
   
   // Calculate total savings
   const totalSavings = savingGoals.reduce((sum, goal) => sum + goal.currentAmount, 0);
@@ -211,6 +231,26 @@ const Profile = () => {
               <Button onClick={handleUpdateProfile} disabled={isUpdating} className="w-full">
                 {isUpdating ? 'Updating Profile...' : 'Update Profile'}
               </Button>
+              
+              <div className="pt-4">
+                <Dialog open={isAddingSaving} onOpenChange={setIsAddingSaving}>
+                  <DialogTrigger asChild>
+                    <Button variant="outline" className="w-full flex items-center gap-2">
+                      <PiggyBank className="h-4 w-4" />
+                      <span>Add Saving Goal</span>
+                    </Button>
+                  </DialogTrigger>
+                  <DialogContent>
+                    <DialogHeader>
+                      <DialogTitle>Add New Saving Goal</DialogTitle>
+                      <DialogDescription>
+                        Create a new saving goal to track your progress
+                      </DialogDescription>
+                    </DialogHeader>
+                    <GoalForm onClose={handleAddSavingComplete} />
+                  </DialogContent>
+                </Dialog>
+              </div>
             </CardContent>
           </Card>
         </TabsContent>
@@ -225,9 +265,9 @@ const Profile = () => {
                 <div className="flex items-center justify-between py-2 border-b">
                   <div className="flex items-center">
                     <IndianRupee className="h-5 w-5 text-green-500 mr-2" />
-                    <span className="font-medium">Monthly Income</span>
+                    <span className="font-medium">Total Income</span>
                   </div>
-                  <span className="text-green-600 font-bold">{formatCurrency(income?.amount || 0)}</span>
+                  <span className="text-green-600 font-bold">{formatCurrency(totalIncome)}</span>
                 </div>
                 
                 <div className="flex items-center justify-between py-2 border-b">
@@ -254,13 +294,13 @@ const Profile = () => {
                   <span className="text-purple-600 font-bold">{formatCurrency(totalSavings)}</span>
                 </div>
                 
-                <div className="flex items-center justify-between py-2">
+                <div className="flex items-center justify-between py-2 pt-4">
                   <div className="flex items-center">
                     <IndianRupee className="h-5 w-5 text-primary mr-2" />
                     <span className="font-medium">Remaining Balance</span>
                   </div>
                   <span className="text-primary font-bold">
-                    {formatCurrency((income?.amount || 0) - totalExpenses - totalLoanPayments)}
+                    {formatCurrency(remainingBalance)}
                   </span>
                 </div>
               </div>
