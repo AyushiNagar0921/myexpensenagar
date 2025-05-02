@@ -8,6 +8,8 @@ import GoalCard from '@/components/goals/GoalCard';
 import GoalForm from '@/components/goals/GoalForm';
 import { Skeleton } from "@/components/ui/skeleton";
 import { useNavigate } from 'react-router-dom';
+import { Link } from 'react-router-dom';
+
 
 const SavingGoals = () => {
   const { savingGoals, deleteSavingGoal, isLoading, ensureProfileExists } = useAppContext();
@@ -53,13 +55,8 @@ const SavingGoals = () => {
               <GoalForm onClose={() => setIsAddingGoal(false)} />
             </DialogContent>
           </Dialog>
-          <Button 
-            variant="ghost" 
-            size="icon"
-            onClick={() => navigate('/profile')}
-            className="md:hidden"
-          >
-            <User className="h-5 w-5" />
+       <Button variant="outline" size="sm" asChild>
+            <Link to="/profile">Profile</Link>
           </Button>
         </div>
       </div>

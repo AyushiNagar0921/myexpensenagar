@@ -8,6 +8,7 @@ import LoanCard from '@/components/loans/LoanCard';
 import LoanForm from '@/components/loans/LoanForm';
 import { Skeleton } from "@/components/ui/skeleton";
 import { useNavigate } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 
 const Loans = () => {
   const { loans, deleteLoan, isLoading, ensureProfileExists } = useAppContext();
@@ -53,13 +54,8 @@ const Loans = () => {
               <LoanForm onClose={() => setIsAddingLoan(false)} />
             </DialogContent>
           </Dialog>
-          <Button 
-            variant="ghost" 
-            size="icon"
-            onClick={() => navigate('/profile')}
-            className="md:hidden"
-          >
-            <User className="h-5 w-5" />
+       <Button variant="outline" size="sm" asChild>
+            <Link to="/profile">Profile</Link>
           </Button>
         </div>
       </div>

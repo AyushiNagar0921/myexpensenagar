@@ -6,6 +6,8 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
 import { User } from "lucide-react";
 import { useNavigate } from 'react-router-dom';
+import { Link } from 'react-router-dom';
+
 
 const AddExpense = () => {
   const { ensureProfileExists, isLoading } = useAppContext();
@@ -27,12 +29,8 @@ const AddExpense = () => {
       <div className="space-y-6">
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-3xl font-bold tracking-tight">Add Expense</h2>
-          <Button 
-            variant="ghost" 
-            size="icon"
-            onClick={() => navigate('/profile')}
-          >
-            <User className="h-5 w-5" />
+       <Button variant="outline" size="sm" asChild>
+            <Link to="/profile">Profile</Link>
           </Button>
         </div>
         <Skeleton className="h-[400px] w-full" />

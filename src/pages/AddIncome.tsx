@@ -6,6 +6,8 @@ import { useNavigate } from 'react-router-dom';
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
 import { User } from "lucide-react";
+import { Link } from 'react-router-dom';
+
 
 const AddIncome = () => {
   const { incomes, isLoading, ensureProfileExists } = useAppContext();
@@ -44,13 +46,9 @@ const AddIncome = () => {
     <div className="space-y-6">
       <div className="flex items-center justify-between mb-4">
         <h2 className="text-3xl font-bold tracking-tight">Add Income</h2>
-        <Button 
-          variant="ghost" 
-          size="icon"
-          onClick={() => navigate('/profile')}
-        >
-          <User className="h-5 w-5" />
-        </Button>
+       <Button variant="outline" size="sm" asChild>
+            <Link to="/profile">Profile</Link>
+          </Button>
       </div>
       
       <IncomeForm onSuccess={() => navigate('/')} />

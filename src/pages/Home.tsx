@@ -11,7 +11,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Link } from 'react-router-dom';
 import { Drawer, DrawerContent, DrawerHeader, DrawerTitle, DrawerDescription } from '@/components/ui/drawer';
-import { useMediaQuery } from '@/hooks/use-mobile';
+import { useMediaQuery } from '@/hooks/use-media-query';
 
 const Home = () => {
   const [showBudgetSetup, setShowBudgetSetup] = useState(false);
@@ -94,7 +94,7 @@ const Home = () => {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <h2 className="text-3xl font-bold tracking-tight">Dashboard</h2>
-        <div className="hidden md:block">
+        <div className=" md:block">
           <Button variant="outline" size="sm" asChild>
             <Link to="/profile">Profile</Link>
           </Button>

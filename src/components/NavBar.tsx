@@ -81,38 +81,25 @@ const NavBar = () => {
         </div>
         
         {/* Mobile Navigation */}
-        <div className="md:hidden ml-auto">
-          <Sheet open={open} onOpenChange={setOpen}>
-            <SheetTrigger asChild>
-              <Button variant="outline" size="icon">
-                <Menu className="h-5 w-5" />
-              </Button>
-            </SheetTrigger>
-            <SheetContent side="left">
-              <Link to="/" className="font-bold text-xl mb-6 flex items-center">
-                <span className="gradient-text">Dream Tracker</span>
-              </Link>
-              <nav className="flex flex-col space-y-4 mt-6">
-                {navItems.map((item) => (
-                  <Link
-                    key={item.path}
-                    to={item.path}
-                    className={cn(
-                      "text-sm font-medium transition-colors hover:text-primary flex items-center py-2",
-                      isActive(item.path)
-                        ? "text-primary"
-                        : "text-muted-foreground"
-                    )}
-                    onClick={() => setOpen(false)}
-                  >
-                    {item.icon}
-                    <span className="ml-2">{item.name}</span>
-                  </Link>
-                ))}
-              </nav>
-            </SheetContent>
-          </Sheet>
-        </div>
+{/* Bottom Navigation for Mobile */}
+<div className="fixed bottom-0 left-0 right-0 z-50 bg-white border-t shadow md:hidden">
+  <nav className="flex justify-around items-center h-16">
+    {navItems.map((item) => (
+      <Link
+        key={item.path}
+        to={item.path}
+        className={cn(
+          "flex flex-col items-center text-xs",
+          isActive(item.path) ? "text-primary" : "text-muted-foreground"
+        )}
+      >
+        {item.icon}
+        <span>{item.name}</span>
+      </Link>
+    ))}
+  </nav>
+</div>
+
       </div>
     </div>
   );

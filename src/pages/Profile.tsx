@@ -308,25 +308,6 @@ const Profile = () => {
                   </span>
                 </div>
                 
-                <div className="flex justify-center mt-4">
-                  <Dialog open={isAddingSaving} onOpenChange={setIsAddingSaving}>
-                    <DialogTrigger asChild>
-                      <Button className="flex items-center gap-2">
-                        <PiggyBank className="h-4 w-4" />
-                        <span>Add New Saving Goal</span>
-                      </Button>
-                    </DialogTrigger>
-                    <DialogContent>
-                      <DialogHeader>
-                        <DialogTitle>Add New Saving Goal</DialogTitle>
-                        <DialogDescription>
-                          Create a new saving goal to track your progress
-                        </DialogDescription>
-                      </DialogHeader>
-                      <GoalForm onClose={handleAddSavingComplete} />
-                    </DialogContent>
-                  </Dialog>
-                </div>
               </div>
             </CardContent>
           </Card>
