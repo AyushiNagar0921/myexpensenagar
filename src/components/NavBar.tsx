@@ -4,6 +4,8 @@ import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { Home, PlusCircle, BarChart3, PiggyBank, CreditCard, Menu } from "lucide-react";
 import { cn } from '@/lib/utils';
+// import logo from '/favicon-96x961.png';
+
 
 const NavBar = () => {
   const [open, setOpen] = useState(false);
@@ -20,12 +22,12 @@ const NavBar = () => {
       icon: <Home className="h-5 w-5" />,
     },
     {
-      name: 'Add Income',
+      name: 'Income',
       path: '/add-income',
       icon: <PlusCircle className="h-5 w-5" />,
     },
     {
-      name: 'Add Expense',
+      name: 'Expense',
       path: '/add-expense',
       icon: <PlusCircle className="h-5 w-5" />,
     },
@@ -49,10 +51,11 @@ const NavBar = () => {
   return (
     <div className="border-b">
       <div className="flex h-16 items-center px-4">
-        <Link to="/" className="font-bold text-xl mr-6 flex items-center">
-          <span className="gradient-text">Dream Tracker</span>
-        </Link>
-        
+      <Link to="/" className="font-bold text-2xl mr-6 flex items-center space-x-2">
+      <img src="/favicon-96x961.png" alt="Logo" className="h-10 w-10" />
+      <span className="gradient-text">Dream Tracker</span>
+</Link>
+
         {/* Desktop Navigation */}
         <nav className="hidden md:flex items-center space-x-4 lg:space-x-6 mx-6">
           {navItems.map((item) => (
@@ -83,13 +86,13 @@ const NavBar = () => {
         {/* Mobile Navigation */}
 {/* Bottom Navigation for Mobile */}
 <div className="fixed bottom-0 left-0 right-0 z-50 bg-white border-t shadow md:hidden">
-  <nav className="flex justify-around items-center h-16">
+  <nav className="flex justify-between items-center h-16 px-4">
     {navItems.map((item) => (
       <Link
         key={item.path}
         to={item.path}
         className={cn(
-          "flex flex-col items-center text-xs",
+          "flex flex-col items-center text-xs flex-grow",
           isActive(item.path) ? "text-primary" : "text-muted-foreground"
         )}
       >

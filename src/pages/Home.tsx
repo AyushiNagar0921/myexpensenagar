@@ -12,6 +12,7 @@ import { Button } from '@/components/ui/button';
 import { Link } from 'react-router-dom';
 import { Drawer, DrawerContent, DrawerHeader, DrawerTitle, DrawerDescription } from '@/components/ui/drawer';
 import { useMediaQuery } from '@/hooks/use-media-query';
+import logo from '/favicon-96x961.png';
 
 const Home = () => {
   const [showBudgetSetup, setShowBudgetSetup] = useState(false);
@@ -91,6 +92,16 @@ const Home = () => {
   );
   
   return (
+    <>
+    {isMobile && (
+      <div className="flex items-center px-4 pt-2 pb-5">
+  <Link to="/" className="flex items-center space-x-3">
+    <img src={logo} alt="Logo" className="h-14 w-14" />
+    <span className="font-bold text-4xl gradient-text">Dream Tracker</span>
+  </Link>
+</div>
+
+    )}
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <h2 className="text-3xl font-bold tracking-tight">Dashboard</h2>
@@ -153,6 +164,8 @@ const Home = () => {
         </Sheet>
       )}
     </div>
+    </>
+
   );
 };
 

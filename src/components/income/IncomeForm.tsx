@@ -110,7 +110,7 @@ const IncomeForm = ({ onSuccess }: IncomeFormProps) => {
   };
   
   return (
-    <Card>
+    <Card className="bg-white/60 backdrop-blur-sm shadow-lg border border-white/40">
       <CardHeader>
         <CardTitle>Add Income</CardTitle>
         <CardDescription>

@@ -223,17 +223,17 @@ const TransactionsTable = () => {
         </div>
       </div>
       
-      <div className="border rounded-lg overflow-hidden">
-        <div className="overflow-x-auto">
+      <div className="bg-white/60 backdrop-blur-sm shadow-lg border border-white/40 rounded-lg overflow-hidden">
+      <div className="overflow-x-auto">
           <table className="w-full">
             <thead>
               <tr className="bg-muted/50">
-                <th className="text-left py-3 px-4 text-sm font-medium text-muted-foreground">Date</th>
-                <th className="text-left py-3 px-4 text-sm font-medium text-muted-foreground">Description</th>
-                <th className="text-left py-3 px-4 text-sm font-medium text-muted-foreground">Type</th>
-                <th className="text-left py-3 px-4 text-sm font-medium text-muted-foreground">Category</th>
-                <th className="text-right py-3 px-4 text-sm font-medium text-muted-foreground">Amount</th>
-                <th className="text-right py-3 px-4 text-sm font-medium text-muted-foreground">Actions</th>
+                <th className="text-left py-3 px-4 text-sm font-medium ">Date</th>
+                <th className="text-left py-3 px-4 text-sm font-medium ">Description</th>
+                <th className="text-left py-3 px-4 text-sm font-medium ">Type</th>
+                <th className="text-left py-3 px-4 text-sm font-medium ">Category</th>
+                <th className="text-right py-3 px-4 text-sm font-medium ">Amount</th>
+                <th className="text-right py-3 px-4 text-sm font-medium">Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y">

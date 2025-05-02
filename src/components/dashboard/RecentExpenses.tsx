@@ -61,7 +61,7 @@ const RecentExpenses = () => {
   };
   
   return (
-    <Card className="shadow-md">
+    <Card className="bg-white/60 backdrop-blur-sm shadow-lg border border-white/40">
       <CardHeader className="pb-3">
         <CardTitle className="text-xl font-medium">Recent Expenses</CardTitle>
       </CardHeader>

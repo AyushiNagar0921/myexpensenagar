@@ -35,7 +35,7 @@ const ActiveLoans = () => {
   };
   
   return (
-    <Card className="shadow-md">
+    <Card className="bg-white/60 backdrop-blur-sm shadow-lg border border-white/40">
       <CardHeader className="pb-2">
         <CardTitle className="text-xl font-medium">Active Loans</CardTitle>
       </CardHeader>

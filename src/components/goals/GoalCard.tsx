@@ -82,7 +82,7 @@ const GoalCard: React.FC<GoalCardProps> = ({ goal, onDelete }) => {
   };
   
   return (
-    <Card className="expense-card">
+    <Card className="bg-white/60 backdrop-blur-sm shadow-lg border border-white/40">
       <CardContent className="pt-6 pb-4">
         <div className="flex justify-between items-start mb-2">
           <h3 className="text-lg font-semibold">{goal.title}</h3>

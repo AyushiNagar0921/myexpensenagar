@@ -53,53 +53,57 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
-  const signUp = async (email: string, password: string, userData?: { username?: string; avatar_url?: string }) => {
+  const signUp = async (
+    email: string,
+    password: string,
+    userData?: { username?: string; avatar_url?: string }
+  ) => {
     try {
-      // Sign up without email verification by using signInWithPassword directly after sign up
-      const { error: signUpError, data } = await supabase.auth.signUp({ 
-        email, 
+      // Sign up user with optional metadata
+      const { error: signUpError } = await supabase.auth.signUp({
+        email,
         password,
         options: {
-          data: userData
-        }
+          data: userData,
+        },
       });
-      
+  
       if (signUpError) throw signUpError;
-      
-      // If signup is successful, immediately sign in the user
-      if (data.user) {
-        // If user profile data was provided, save it to profiles table
-        if (userData && (userData.username || userData.avatar_url)) {
-          const { error: profileError } = await supabase
-            .from('profiles')
-            .upsert({ 
-              id: data.user.id,
-              username: userData.username,
-              avatar_url: userData.avatar_url 
-            });
-          
-          if (profileError) {
-            console.error('Error saving profile data:', profileError);
-          }
+  
+      // Sign in immediately so auth.uid() becomes available
+      const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      });
+  
+      if (signInError) throw signInError;
+  
+      const signedInUser = signInData.user;
+      if (!signedInUser) throw new Error("User not signed in after signup");
+  
+      // Now safe to upsert profile (RLS will work)
+      if (userData && (userData.username || userData.avatar_url)) {
+        const { error: profileError } = await supabase
+          .from('profiles')
+          .upsert({
+            id: signedInUser.id,
+            username: userData.username,
+            avatar_url: userData.avatar_url,
+          });
+  
+        if (profileError) {
+          console.error('Error saving profile data:', profileError.message, profileError.details);
+          toast.error('Could not save profile info');
         }
-        
-        // Auto sign in after signup
-        const { error: signInError } = await supabase.auth.signInWithPassword({
-          email, 
-          password
-        });
-        
-        if (signInError) throw signInError;
-        
-        toast.success('Signed up successfully and logged in');
-      } else {
-        toast.error('Failed to create account');
       }
+  
+      toast.success('Signed up successfully and logged in');
     } catch (error: any) {
       toast.error(error.message || 'Failed to sign up');
       throw error;
     }
   };
+  
 
   const signOut = async () => {
     try {

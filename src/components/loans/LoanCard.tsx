@@ -28,7 +28,7 @@ const LoanCard: React.FC<LoanCardProps> = ({ loan, onDelete }) => {
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('en-US', {
       style: 'currency',
-      currency: 'USD',
+      currency: 'INR',
       minimumFractionDigits: 0,
       maximumFractionDigits: 0,
     }).format(amount);
@@ -80,7 +80,7 @@ const LoanCard: React.FC<LoanCardProps> = ({ loan, onDelete }) => {
   };
 
   return (
-    <Card className="loan-card">
+    <Card className="bg-white/60 backdrop-blur-sm shadow-lg border border-white/40">
       <CardContent className="pt-6 pb-4">
         <div className="flex justify-between items-start mb-2">
           <h3 className="text-lg font-semibold">{loan.title}</h3>
