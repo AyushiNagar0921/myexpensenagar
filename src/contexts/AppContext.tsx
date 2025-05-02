@@ -2,7 +2,7 @@
 import React, { useEffect } from 'react';
 import { ProfileProvider, useProfileContext } from './ProfileContext';
 import { IncomeProvider, useIncomeContext } from './IncomeContext';
-import { ExpenseProvider, useExpenseContext } from './ExpenseContext';
+import { ExpenseProvider, useExpenseContext, EXPENSE_CATEGORIES } from './ExpenseContext';
 import { SavingGoalProvider, useSavingGoalContext } from './SavingGoalContext';
 import { LoanProvider, useLoanContext } from './LoanContext';
 import { BudgetProvider, useBudgetContext } from './BudgetContext';
@@ -39,6 +39,7 @@ interface AppContextType {
   isLoading: boolean;
   profileExists: ReturnType<typeof useProfileContext>['profileExists'];
   ensureProfileExists: ReturnType<typeof useProfileContext>['ensureProfileExists'];
+  EXPENSE_CATEGORIES: typeof EXPENSE_CATEGORIES; // Add this to the interface
 }
 
 const CombinedContext = React.createContext<AppContextType | undefined>(undefined);
@@ -50,7 +51,7 @@ function CombinedProvider({ children }: { children: React.ReactNode }) {
   } = useIncomeContext();
   
   const { 
-    expenses, addExpense, deleteExpense, fetchExpenses, isLoading: expenseLoading 
+    expenses, addExpense, deleteExpense, fetchExpenses, isLoading: expenseLoading, EXPENSE_CATEGORIES 
   } = useExpenseContext();
   
   const {
@@ -123,6 +124,7 @@ function CombinedProvider({ children }: { children: React.ReactNode }) {
         isLoading,
         profileExists,
         ensureProfileExists,
+        EXPENSE_CATEGORIES, // Add this to the provider value
       }}
     >
       {children}

@@ -31,6 +31,7 @@ interface ExpenseContextType {
   setExpenses: React.Dispatch<React.SetStateAction<Expense[]>>;
   fetchExpenses: () => Promise<void>;
   isLoading: boolean;
+  EXPENSE_CATEGORIES: ExpenseCategory[]; // Add this to the interface
 }
 
 const ExpenseContext = createContext<ExpenseContextType | undefined>(undefined);
@@ -137,7 +138,8 @@ export function ExpenseProvider({ children }: { children: React.ReactNode }) {
         deleteExpense,
         setExpenses,
         fetchExpenses,
-        isLoading
+        isLoading,
+        EXPENSE_CATEGORIES // Add this to the provider value
       }}
     >
       {children}
