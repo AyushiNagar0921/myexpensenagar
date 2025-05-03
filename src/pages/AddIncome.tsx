@@ -5,8 +5,9 @@ import { useAppContext } from '@/contexts/AppContext';
 import { useNavigate } from 'react-router-dom';
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
-import { User } from "lucide-react";
+import { CircleUserRound, User } from "lucide-react";
 import { Link } from 'react-router-dom';
+import { UserCircle } from "lucide-react"; // better profile icon
 
 
 const AddIncome = () => {
@@ -27,30 +28,38 @@ const AddIncome = () => {
   if (isLoading && !profileChecked) {
     return (
       <div className="space-y-6">
-        <div className="flex items-center justify-between mb-4">
-          <h2 className="text-3xl font-bold tracking-tight">Add Income</h2>
-          <Button 
-            variant="ghost" 
-            size="icon"
-            onClick={() => navigate('/profile')}
-          >
-            <User className="h-5 w-5" />
-          </Button>
-        </div>
-        <Skeleton className="h-[400px] w-full" />
+      <div className="flex items-center justify-between mb-4">
+        <h2 className="text-3xl font-bold tracking-tight">Add Expense</h2>
+        <Button 
+          variant="ghost" 
+          size="icon"
+          onClick={() => navigate('/profile')}
+          className="h-12 w-12"
+        >
+                <CircleUserRound className="scale-[1.8] text-primary" />
+
+        </Button>
       </div>
+        </div>
     );
   }
   
   return (
+
     <div className="space-y-6">
-      <div className="flex items-center justify-between mb-4">
-        <h2 className="text-3xl font-bold tracking-tight">Add Income</h2>
-       <Button variant="outline" size="sm" asChild>
-            <Link to="/profile">Profile</Link>
-          </Button>
-      </div>
-      
+    <div className="flex items-center justify-between mb-4">
+      <h2 className="text-3xl font-bold tracking-tight">Add Expense</h2>
+      <Button 
+        variant="ghost" 
+        size="icon"
+        onClick={() => navigate('/profile')}
+        className="h-12 w-12"
+      >
+              <CircleUserRound className="scale-[1.8] text-primary" />
+
+      </Button>
+    </div>
+
       <IncomeForm onSuccess={() => navigate('/')} />
     </div>
   );

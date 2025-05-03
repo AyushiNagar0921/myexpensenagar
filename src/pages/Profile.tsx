@@ -153,7 +153,7 @@ const Profile = () => {
         <h2 className="text-3xl font-bold tracking-tight">Profile</h2>
         <Button 
           variant="destructive" 
-          className="flex items-center gap-2"
+          className="flex items-center gap-2 bg-primary"
           onClick={handleLogout}
         >
           <LogOut className="h-4 w-4" />

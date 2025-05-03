@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog";
-import { Plus, User } from "lucide-react";
+import { CircleUserRound, Plus, User } from "lucide-react";
 import { useAppContext } from '@/contexts/AppContext';
 import LoanCard from '@/components/loans/LoanCard';
 import LoanForm from '@/components/loans/LoanForm';
@@ -54,9 +54,15 @@ const Loans = () => {
               <LoanForm onClose={() => setIsAddingLoan(false)} />
             </DialogContent>
           </Dialog>
-       <Button variant="outline" size="sm" asChild>
-            <Link to="/profile">Profile</Link>
-          </Button>
+          <Button 
+        variant="ghost" 
+        size="icon"
+        onClick={() => navigate('/profile')}
+        className="h-12 w-12"
+      >
+              <CircleUserRound className="scale-[1.8] text-primary" />
+
+      </Button>
         </div>
       </div>
       

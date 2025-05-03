@@ -12,7 +12,10 @@ import { Button } from '@/components/ui/button';
 import { Link } from 'react-router-dom';
 import { Drawer, DrawerContent, DrawerHeader, DrawerTitle, DrawerDescription } from '@/components/ui/drawer';
 import { useMediaQuery } from '@/hooks/use-media-query';
-import logo from '/favicon-96x961.png';
+import logo from '/favicon-96x962.png';
+import { CircleUserRound } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import { useAuth } from '@/contexts/AuthContext';
 
 const Home = () => {
   const [showBudgetSetup, setShowBudgetSetup] = useState(false);
@@ -20,7 +23,10 @@ const Home = () => {
   const [justAddedIncome, setJustAddedIncome] = useState(false);
   const { ensureProfileExists, isLoading } = useAppContext();
   const isMobile = useMediaQuery("(max-width: 768px)");
-  
+  const navigate = useNavigate();
+  const { user: authUser } = useAuth();
+const username = authUser?.user_metadata?.username || authUser?.email?.split('@')[0] || 'User';
+
   useEffect(() => {
     // Check if just added income
     const checkJustAddedIncome = () => {
@@ -106,33 +112,42 @@ const Home = () => {
       <div className="flex items-center justify-between">
         <h2 className="text-3xl font-bold tracking-tight">Dashboard</h2>
         <div className=" md:block">
-          <Button variant="outline" size="sm" asChild>
-            <Link to="/profile">Profile</Link>
-          </Button>
+        <Button 
+        variant="ghost" 
+        size="icon"
+        onClick={() => navigate('/profile')}
+        className="h-12 w-12"
+      >
+              <CircleUserRound className="scale-[1.8] text-primary" />
+
+      </Button>
         </div>
       </div>
-      
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-        <div className="col-span-full md:col-span-2">
-          <BalanceCard />
-        </div>
-        
-        <div className="col-span-full md:col-span-1">
-          <SavingsGoalsCard />
-        </div>
-        
-        <div className="col-span-full md:col-span-2">
-          <RecentExpenses />
-        </div>
-        
-        <div className="col-span-full md:col-span-1">
-          <ActiveLoans />
-        </div>
-        
-        <div className="col-span-full">
-          <CategoryBreakdown />
-        </div>
-      </div>
+      <p className="font-bold text-2xl text-primary">Hi, {username}</p>
+
+      <div className="grid gap-4">
+  {/* Row 1: BalanceCard + CategoryBreakdown */}
+  <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
+  <div className="md:col-span-3">
+    <BalanceCard />
+  </div>
+  <div className="md:col-span-2">
+    <CategoryBreakdown />
+  </div>
+</div>
+
+  {/* Row 2: SavingsGoalsCard + ActiveLoans */}
+  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+    <SavingsGoalsCard />
+    <ActiveLoans />
+  </div>
+
+  {/* Row 3: RecentExpenses full width */}
+  <div>
+    <RecentExpenses />
+  </div>
+</div>
+
       
       {/* Mobile: Use Drawer for budget setup */}
       {showBudgetSetup && isMobile && (
