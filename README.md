@@ -22,6 +22,11 @@ Dream Tracker is a personal finance management app that helps users:
 - **React Router**
 - **Sonner (toast notifications)**
 
+## 🔔 Future Implementations
+
+- **Notifications:** Real-time alerts for transactions and budget updates.
+- **Reminders:** Automated prompts for bill payments and savings goals.
+
 ## Getting Started
 
 ### 1. Clone the repository
