@@ -1,3 +1,6 @@
+
+![Cover Image](https://github.com/AyushiNagar0921/myexpensenagar/blob/main/public/Dream%20Tracker.png?raw=true)
+
 # Dream Tracker
 
 ## Overview
