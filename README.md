@@ -1,3 +1,6 @@
+
+![Cover Image](https://github.com/AyushiNagar0921/myexpensenagar/blob/main/public/Dream%20Tracker.png?raw=true)
+
 # Dream Tracker
 
 ## Overview
@@ -18,6 +21,11 @@ Dream Tracker is a personal finance management app that helps users:
 - **Supabase**
 - **React Router**
 - **Sonner (toast notifications)**
+
+## 🔔 Future Implementations
+
+- **Notifications:** Real-time alerts for transactions and budget updates.
+- **Reminders:** Automated prompts for bill payments and savings goals.
 
 ## Getting Started
 
