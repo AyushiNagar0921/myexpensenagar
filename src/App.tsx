@@ -22,6 +22,14 @@ import NotFound from "./pages/NotFound";
 // Components
 import Layout from "./components/Layout";
 import Index from "./pages/Index";
+import DeviceTokenManager from "./contexts/DevicetokenManager";
+import { ProfileProvider } from "./contexts/ProfileContext";
+import { SavingGoalProvider } from "./contexts/SavingGoalContext";
+import { IncomeProvider } from "./contexts/IncomeContext";
+import { LoanProvider } from "./contexts/LoanContext";
+import { ExpenseProvider } from "./contexts/ExpenseContext";
+// import { FinancialSummaryProvider } from "./contexts/FinancialSummaryContext";
+import { BudgetProvider } from "./contexts/BudgetContext";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -45,9 +53,10 @@ const PrivateRoute = ({ children }: { children: React.ReactNode }) => {
       </div>
     );
   }
-  
+
   return user ? <>{children}</> : <Navigate to="/auth" replace />;
 };
+
 
 // Route guard for public routes (redirect to home if authenticated)
 const PublicRoute = ({ children }: { children: React.ReactNode }) => {
@@ -85,29 +94,29 @@ const AppRoutes = () => {
   );
 };
 
-const NavigationHandler = () => {
-  const { user } = useAuth();
-  const navigate = useNavigate();
+// const NavigationHandler = () => {
+//   const { user } = useAuth();
+//   const navigate = useNavigate();
 
-  useEffect(() => {
-    if (user) {
-      navigate('/');
-    } else {
-      navigate('/auth');
-    }
-  }, [user, navigate]);
+//   useEffect(() => {
+//     if (user) {
+//       navigate('/');
+//     } else {
+//       navigate('/auth');
+//     }
+//   }, [user, navigate]);
 
-  return null;
-};
-
+//   return null;
+// };
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <TooltipProvider>
       <BrowserRouter>
         <AuthProvider>
-          <AppProvider>
+          <AppProvider> 
             <Toaster />
-            <Sonner />
+            <Sonner />      {/* ✅ Now safe to call useSavingGoalContext */}
+            <DeviceTokenManager />
             <AppRoutes />
           </AppProvider>
         </AuthProvider>
@@ -115,5 +124,7 @@ const App = () => (
     </TooltipProvider>
   </QueryClientProvider>
 );
+
+
 
 export default App;

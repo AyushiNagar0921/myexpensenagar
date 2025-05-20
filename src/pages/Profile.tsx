@@ -21,6 +21,7 @@ import GoalForm from '@/components/goals/GoalForm';
 const Profile = () => {
   const { user: authUser, updateUserProfile } = useAuth();
   const { income, expenses, loans, savingGoals, isLoading, logout, totalIncome, remainingBalance } = useAppContext();
+  
   const navigate = useNavigate();
   
   const [username, setUsername] = useState(authUser?.user_metadata?.username || '');
@@ -233,7 +234,7 @@ const Profile = () => {
             </CardContent>
           </Card>
           
-          <Card className="mt-4">
+          {/* <Card className="mt-4">
             <CardHeader>
               <CardTitle>Add Saving Goal</CardTitle>
             </CardHeader>
@@ -256,7 +257,7 @@ const Profile = () => {
                 </DialogContent>
               </Dialog>
             </CardContent>
-          </Card>
+          </Card> */}
         </TabsContent>
         
         <TabsContent value="finance" className="mt-4">

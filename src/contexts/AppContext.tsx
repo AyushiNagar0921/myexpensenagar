@@ -4,12 +4,12 @@ import { useProfileContext, ProfileProvider } from './ProfileContext';
 import { useSavingGoalContext, SavingGoalProvider } from './SavingGoalContext';
 import { useLoanContext, LoanProvider } from './LoanContext';
 import { useIncomeContext, IncomeProvider } from './IncomeContext';
-import { useExpenseContext, ExpenseProvider, Expense } from './ExpenseContext';
+import { useExpenseContext, ExpenseProvider } from './ExpenseContext';
 import { useBudgetContext, BudgetProvider } from './BudgetContext';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 
-// Define the types locally to avoid circular dependencies
+// ------------------- Types -------------------
 export type SavingGoal = {
   id: string;
   title: string;
@@ -36,58 +36,162 @@ export type Income = {
   category?: string;
 };
 
+import type { Expense } from './ExpenseContext';
+
 interface AppContextType {
-  // Profile
   profileExists: boolean;
   ensureProfileExists: () => Promise<boolean>;
   logout: () => Promise<void>;
-  
-  // Saving Goals
+
   savingGoals: SavingGoal[];
   fetchSavingGoals: () => Promise<void>;
-  addSavingGoal: (goal: Omit<SavingGoal, "id">) => Promise<void>;
+  addSavingGoal: (goal: Omit<SavingGoal, 'id'>) => Promise<void>;
   updateSavingGoal: (goal: SavingGoal) => Promise<void>;
-  updateSavingGoalAmount: (id: string, amount: number) => Promise<void>;
+  updateSavingGoalAmount: (id: string, amount: number, goalTitle: string) => Promise<void>;
   deleteSavingGoal: (id: string) => Promise<void>;
-  
-  // Loans
+
   loans: Loan[];
   fetchLoans: () => Promise<void>;
-  addLoan: (loan: Omit<Loan, "id">) => Promise<void>;
+  addLoan: (loan: Omit<Loan, 'id'>) => Promise<void>;
   updateLoan: (id: string, loan: any) => Promise<void>;
-  updateLoanPayment: (id: string, amount: number) => Promise<void>;
+  updateLoanPayment: (loanId: string, paymentAmount: number, loanTitle: string) => Promise<void>;
   deleteLoan: (id: string) => Promise<void>;
-  
-  // Income
+
   income: Income[];
   incomes: Income[];
   fetchIncome: () => Promise<void>;
-  addIncome: (income: Omit<Income, "id">) => Promise<void>;
+  addIncome: (income: Omit<Income, 'id'>) => Promise<void>;
   updateIncome: (id: string, income: any) => Promise<void>;
   deleteIncome: (id: string) => Promise<void>;
-  setIncome: (income: Omit<Income, "id">) => Promise<void>;
-  
-  // Expenses
+  setIncome: (income: Omit<Income, 'id'>) => Promise<void>;
+
   expenses: Expense[];
   fetchExpenses: () => Promise<void>;
   addExpense: (expense: any) => Promise<void>;
   deleteExpense: (id: string) => Promise<void>;
-  
-  // Budget
+
   saveBudgetCategories: (categories: any[]) => Promise<void>;
-  
-  // Loading state
+
   isLoading: boolean;
-  
-  // Calculated values
+
   totalIncome: number;
   remainingBalance: number;
 }
 
+// ------------------- Context -------------------
 const AppContext = createContext<AppContextType | undefined>(undefined);
 
+// ------------------- AppContextWrapper -------------------
+function AppContextWrapper({ children }: { children: React.ReactNode }) {
+  const { user } = useAuth();
+  const profileContext = useProfileContext();
+  const savingGoalContext = useSavingGoalContext();
+  const loanContext = useLoanContext();
+  const incomeContext = useIncomeContext();
+  const expenseContext = useExpenseContext();
+  const budgetContext = useBudgetContext();
+
+  const [isLoading, setIsLoading] = useState(true);
+
+const totalIncome = incomeContext.incomes.reduce((sum, income) => sum + income.amount, 0);
+const totalExpenses = expenseContext.expenses.reduce((sum, expense) => sum + expense.amount, 0);
+const remainingBalance = totalIncome - totalExpenses;
+
+  const totalSavings = savingGoalContext.savingGoals.reduce((sum, goal) => sum + goal.currentAmount, 0);
+  const totalLoanPayments = loanContext.loans.reduce(
+    (sum, loan) => sum + (loan.totalAmount - loan.remainingAmount),
+    0
+  );
+  useEffect(() => {
+    const fetchAllData = async () => {
+      if (user) {
+        setIsLoading(true);
+        try {
+          await profileContext.ensureProfileExists();
+          await Promise.all([
+            savingGoalContext.fetchSavingGoals(),
+            loanContext.fetchLoans(),
+            incomeContext.fetchIncomes(),
+            expenseContext.fetchExpenses()
+          ]);
+        } catch (error) {
+          console.error('Error fetching data:', error);
+          toast.error('Failed to load your data');
+        } finally {
+          setIsLoading(false);
+        }
+      } else {
+        setIsLoading(false);
+      }
+    };
+
+    fetchAllData();
+  }, [user]);
+
+  const contextValue: AppContextType = {
+    profileExists: profileContext.profileExists,
+    ensureProfileExists: profileContext.ensureProfileExists,
+    logout: profileContext.logout,
+
+    savingGoals: savingGoalContext.savingGoals,
+    fetchSavingGoals: savingGoalContext.fetchSavingGoals,
+    addSavingGoal: savingGoalContext.addSavingGoal,
+    updateSavingGoal: savingGoalContext.updateSavingGoal,
+    updateSavingGoalAmount: async (id, amount, goalTitle) => {
+      if (amount > remainingBalance) {
+        toast.error("You don't have enough remaining balance.");
+        return;
+      }
+      await savingGoalContext.updateSavingGoalAmount(id, amount, goalTitle);
+    },
+    deleteSavingGoal: savingGoalContext.deleteSavingGoal,
+
+    loans: loanContext.loans,
+    fetchLoans: loanContext.fetchLoans,
+    addLoan: loanContext.addLoan,
+    updateLoan: loanContext.updateLoan,
+    updateLoanPayment: async (loanId, paymentAmount, loanTitle) => {
+      if (paymentAmount > remainingBalance) {
+        toast.error("You don't have enough remaining balance to allocate this amount. Please add income first.");
+        return;
+      }
+      await loanContext.updateLoanPayment(loanId, paymentAmount, loanTitle);
+    },
+    deleteLoan: loanContext.deleteLoan,
+
+    income: incomeContext.incomes,
+    incomes: incomeContext.incomes,
+    fetchIncome: incomeContext.fetchIncomes,
+    addIncome: incomeContext.addIncome,
+    updateIncome: (id, income) => Promise.resolve(),
+    deleteIncome: (id) => Promise.resolve(),
+    setIncome: incomeContext.addIncome,
+
+    expenses: expenseContext.expenses,
+    fetchExpenses: expenseContext.fetchExpenses,
+    addExpense: expenseContext.addExpense,
+    deleteExpense: expenseContext.deleteExpense,
+
+    saveBudgetCategories: budgetContext.saveBudgetCategories,
+
+    isLoading:
+      isLoading ||
+      profileContext.isLoading ||
+      savingGoalContext.isLoading ||
+      loanContext.isLoading ||
+      incomeContext.isLoading ||
+      expenseContext.isLoading ||
+      budgetContext.isLoading,
+
+    totalIncome,
+    remainingBalance
+  };
+
+  return <AppContext.Provider value={contextValue}>{children}</AppContext.Provider>;
+}
+
+// ------------------- Exported AppProvider -------------------
 export function AppProvider({ children }: { children: React.ReactNode }) {
-  // Create a wrapper component that provides all the context providers
   return (
     <ProfileProvider>
       <SavingGoalProvider>
@@ -105,123 +209,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   );
 }
 
-function AppContextWrapper({ children }: { children: React.ReactNode }) {
-  const { user } = useAuth();
-  const profileContext = useProfileContext();
-  const savingGoalContext = useSavingGoalContext();
-  const loanContext = useLoanContext();
-  const incomeContext = useIncomeContext();
-  const expenseContext = useExpenseContext();
-  const budgetContext = useBudgetContext();
-  
-  const [isLoading, setIsLoading] = useState(true);
-  
-  // Fetch all data when user changes
-  useEffect(() => {
-    const fetchAllData = async () => {
-      if (user) {
-        setIsLoading(true);
-        try {
-          // Ensure profile exists
-          await profileContext.ensureProfileExists();
-          
-          // Fetch all data in parallel
-          await Promise.all([
-            savingGoalContext.fetchSavingGoals(),
-            loanContext.fetchLoans(),
-            incomeContext.fetchIncomes(),
-            expenseContext.fetchExpenses()
-          ]);
-        } catch (error) {
-          console.error('Error fetching data:', error);
-          toast.error('Failed to load your data');
-        } finally {
-          setIsLoading(false);
-        }
-      }
-    };
-    
-    fetchAllData();
-  }, [user]);
-  
-  // Calculate total income
-  const totalIncome = Array.isArray(incomeContext.incomes) ? 
-    incomeContext.incomes.reduce((sum: number, inc: any) => sum + inc.amount, 0) : 0;
-  
-  // Calculate total expenses
-  const totalExpenses = expenseContext.expenses.reduce((sum, expense) => sum + expense.amount, 0);
-  
-  // Calculate total loan payments (amount already paid)
-  const totalLoanPayments = loanContext.loans.reduce((sum, loan) => sum + (loan.totalAmount - loan.remainingAmount), 0);
-  
-  // Calculate total savings (current saved amount) 
-  const totalSavings = savingGoalContext.savingGoals.reduce((sum, goal) => sum + goal.currentAmount, 0);
-  
-  // Calculate the remaining balance by subtracting all outflows from the total income
-  const remainingBalance = totalIncome - (totalExpenses + totalLoanPayments + totalSavings);
-  
-  // Combine all context values
-  const contextValue: AppContextType = {
-    // Profile
-    profileExists: profileContext.profileExists,
-    ensureProfileExists: profileContext.ensureProfileExists,
-    logout: profileContext.logout,
-    
-    // Saving Goals
-    savingGoals: savingGoalContext.savingGoals,
-    fetchSavingGoals: savingGoalContext.fetchSavingGoals,
-    addSavingGoal: savingGoalContext.addSavingGoal,
-    updateSavingGoal: savingGoalContext.updateSavingGoal,
-    updateSavingGoalAmount: savingGoalContext.updateSavingGoalAmount,
-    deleteSavingGoal: savingGoalContext.deleteSavingGoal,
-    
-    // Loans
-    loans: loanContext.loans,
-    fetchLoans: loanContext.fetchLoans,
-    addLoan: loanContext.addLoan,
-    updateLoan: loanContext.updateLoan,
-    updateLoanPayment: loanContext.updateLoanPayment,
-    deleteLoan: loanContext.deleteLoan,
-    
-    // Income
-    income: incomeContext.incomes,
-    incomes: incomeContext.incomes,
-    fetchIncome: incomeContext.fetchIncomes,
-    addIncome: incomeContext.addIncome,
-    updateIncome: (id, income) => Promise.resolve(), // Placeholder until implemented in IncomeContext
-    deleteIncome: (id) => Promise.resolve(), // Placeholder until implemented in IncomeContext
-    setIncome: incomeContext.addIncome,
-    
-    // Expenses
-    expenses: expenseContext.expenses,
-    fetchExpenses: expenseContext.fetchExpenses,
-    addExpense: expenseContext.addExpense,
-    deleteExpense: expenseContext.deleteExpense,
-    
-    // Budget
-    saveBudgetCategories: budgetContext.saveBudgetCategories,
-    
-    // Loading state
-    isLoading: isLoading || 
-               profileContext.isLoading || 
-               savingGoalContext.isLoading || 
-               loanContext.isLoading || 
-               incomeContext.isLoading || 
-               expenseContext.isLoading || 
-               budgetContext.isLoading,
-    
-    // Calculated values
-    totalIncome,
-    remainingBalance
-  };
-  
-  return (
-    <AppContext.Provider value={contextValue}>
-      {children}
-    </AppContext.Provider>
-  );
-}
-
+// ------------------- Hook -------------------
 export const useAppContext = () => {
   const context = useContext(AppContext);
   if (context === undefined) {

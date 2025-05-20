@@ -16,8 +16,8 @@ const ExpenseCategories = {
   Entertainment: 'Entertainment',
   Healthcare: 'Healthcare',
   Clothing: 'Clothing',
-  Debt: 'Debt',
-  Saving: 'Saving',
+  Loans: 'Loans',
+  Savings: 'Savings',
   Other: 'Other'
 };
 
@@ -35,8 +35,8 @@ const BudgetSetupForm: React.FC<BudgetSetupFormProps> = ({ onComplete, onDismiss
     Entertainment: 0,
     Healthcare: 0,
     Clothing: 0,
-    Debt: 0,
-    Saving: 0,
+    Loans: 0,
+    Savings: 0,
     Other: 0
   });
   const [totalAmount, setTotalAmount] = useState(0);
@@ -64,8 +64,9 @@ const BudgetSetupForm: React.FC<BudgetSetupFormProps> = ({ onComplete, onDismiss
           if (storedBudget) {
             const budget = JSON.parse(storedBudget);
             setBudgetItems(budget.amounts || budget); // Handle both old and new format
-            setTotalAmount(Object.values(budget.amounts || budget).reduce((a: any, b: any) => a + b, 0));
-          }
+            const values = Object.values(budget.amounts || budget).map(Number).filter(val => !isNaN(val));
+            setTotalAmount(values.reduce((a, b) => a + b, 0));
+                      }
         }
       } catch (error) {
         console.error("Error loading budget data:", error);

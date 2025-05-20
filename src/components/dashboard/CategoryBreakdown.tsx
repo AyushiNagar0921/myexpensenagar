@@ -2,19 +2,8 @@
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useAppContext } from '@/contexts/AppContext';
-import { ExpenseCategory } from '@/contexts/ExpenseContext';
+import { ExpenseCategory, CATEGORY_COLORS } from '@/contexts/ExpenseContext';
 import { PieChart, Pie, ResponsiveContainer, Cell, Tooltip, Legend } from 'recharts';
-
-// Define colors for each expense category
-const CATEGORY_COLORS: Record<string, string> = {
-  Food: '#10B981', // green
-  Shopping: '#6366F1', // indigo 
-  Transportation: '#F59E0B', // amber
-  Utilities: '#EF4444', // red
-  Entertainment: '#8B5CF6', // purple
-  Health: '#06B6D4', // sky
-  Other: '#6B7280', // gray
-};
 
 const CustomTooltip = ({ active, payload }: any) => {
   if (active && payload && payload.length) {
@@ -81,7 +70,7 @@ const CategoryBreakdown = () => {
                   {chartData.map((entry, index) => (
                     <Cell 
                       key={`cell-${index}`} 
-                      fill={CATEGORY_COLORS[entry.name] || CATEGORY_COLORS.Other} 
+                      fill={CATEGORY_COLORS[entry.name as ExpenseCategory] || CATEGORY_COLORS.Other} 
                     />
                   ))}
                 </Pie>

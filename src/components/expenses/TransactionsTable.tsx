@@ -3,7 +3,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useAppContext } from '@/contexts/AppContext';
-import { ExpenseCategory } from './types';
+import { ExpenseCategory, EXPENSE_CATEGORIES, getCategoryColorClass  } from '@/contexts/ExpenseContext';
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { format } from "date-fns";
@@ -13,35 +13,21 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 const categories: {value: ExpenseCategory | 'all', label: string}[] = [
   { value: 'all', label: 'All Categories' },
-  { value: 'Food', label: 'Food' },
-  { value: 'Shopping', label: 'Shopping' },
-  { value: 'Transportation', label: 'Transportation' },
-  { value: 'Utilities', label: 'Utilities' },
-  { value: 'Entertainment', label: 'Entertainment' },
-  { value: 'Health', label: 'Health' },
-  { value: 'Other', label: 'Other' }
+   ...EXPENSE_CATEGORIES.map((cat) => ({ value: cat, label: cat })),
+ 
+  // { value: 'Food', label: 'Food' },
+  // { value: 'Shopping', label: 'Shopping' },
+  // { value: 'Transportation', label: 'Transportation' },
+  // { value: 'Utilities', label: 'Utilities' },
+  // { value: 'Entertainment', label: 'Entertainment' },
+  // { value: 'Health', label: 'Health' },
+  // { value: 'Savings', label: 'Savings' },
+  // { value: 'Loans', label: 'Loans' },
+  // { value: 'Other', label: 'Other' }
 ];
 
-// Get category badge color class
-const getCategoryColorClass = (category: string): string => {
-  switch (category) {
-    case 'Food':
-      return 'bg-category-food text-white';
-    case 'Shopping':
-      return 'bg-category-shopping text-white';
-    case 'Transportation':
-      return 'bg-category-travel text-white';
-    case 'Utilities':
-      return 'bg-category-bills text-white';
-    case 'Entertainment':
-      return 'bg-category-entertainment text-white';
-    case 'Health':
-      return 'bg-category-health text-white';
-    case 'Other':
-      return 'bg-category-other text-white';
-    default:
-      return 'bg-gray-200 text-gray-800';
-  }
+const getCategoryColorClassWrapper = (category: string): string => {
+  return getCategoryColorClass(category as ExpenseCategory);
 };
 
 const TransactionsTable = () => {
@@ -77,12 +63,12 @@ const TransactionsTable = () => {
       if (transactionType === 'income' && transaction.type !== 'income') return false;
     }
     
-    // Filter by category (only for expenses)
-    if (categoryFilter !== 'all' && transaction.type === 'expense' && 
-        'category' in transaction && transaction.category !== categoryFilter) {
-      return false;
-    }
-    
+  // Filter by category (only for expenses)
+  if (categoryFilter !== 'all') {
+    if (transaction.type !== 'expense') return false; // Exclude incomes if category filter applied
+    if ('category' in transaction && transaction.category !== categoryFilter) return false;
+  }
+  
     // Filter by search query
     if (searchQuery && !transaction.description.toLowerCase().includes(searchQuery.toLowerCase())) {
       return false;

@@ -83,6 +83,8 @@ export default {
 					entertainment: '#8B5CF6',
 					health: '#06B6D4',
 					other: '#6B7280',
+					loans: '#E11D48',     
+					savings: '#6366F1',  
 				}
 			},
 			borderRadius: {

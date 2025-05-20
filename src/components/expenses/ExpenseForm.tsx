@@ -71,7 +71,7 @@ const ExpenseForm = ({ onSuccess }: ExpenseFormProps) => {
       form.reset();
       setCustomCategory('');
       setShowCustomCategory(false);
-      toast.success('Expense added successfully!');
+      // toast.success('Expense added successfully!');
       
       if (onSuccess) {
         onSuccess();

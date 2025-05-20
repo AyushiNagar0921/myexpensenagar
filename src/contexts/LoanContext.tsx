@@ -2,6 +2,7 @@ import React, { createContext, useContext, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { useProfileContext } from './ProfileContext';
+import { useAppContext } from './AppContext';
 
 export interface Loan {
   id: string;
@@ -17,7 +18,7 @@ interface LoanContextType {
   loans: Loan[];
   addLoan: (loan: Omit<Loan, "id">) => Promise<void>;
   updateLoan: (id: string, loan: any) => Promise<void>;
-  updateLoanPayment: (loanId: string, paymentAmount: number) => Promise<void>;
+  updateLoanPayment: (loanId: string, paymentAmount: number, loanTitle: string) => Promise<void>;
   deleteLoan: (id: string) => Promise<void>;
   setLoans: React.Dispatch<React.SetStateAction<Loan[]>>;
   fetchLoans: () => Promise<void>;
@@ -30,7 +31,8 @@ export function LoanProvider({ children }: { children: React.ReactNode }) {
   const [loans, setLoans] = useState<Loan[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const { ensureProfileExists } = useProfileContext();
-  
+  // const { remainingBalance } = useAppContext(); // Add this at the top
+
   const fetchLoans = async () => {
     setIsLoading(true);
     try {
@@ -151,51 +153,73 @@ export function LoanProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
-  const updateLoanPayment = async (loanId: string, paymentAmount: number) => {
+  const updateLoanPayment = async (loanId: string, paymentAmount: number, loanDescription: string) => {
     try {
+      // if (paymentAmount > remainingBalance) {
+      //   toast.error("You don't have enough remaining balance to allocate this amount. Please add income first.");
+      //   return;
+      // }
       setIsLoading(true);
-      
-      // Find the current loan
+  
+      // 1. Update the loan payment
       const loan = loans.find(loan => loan.id === loanId);
-      
+  
       if (!loan) {
         throw new Error('Loan not found');
       }
-      
-      // Calculate new remaining amount
+  
       const newRemainingAmount = Math.max(0, loan.remainingAmount - paymentAmount);
-      
-      // Calculate next payment date (1 month from now)
+  
       const nextPaymentDate = new Date();
       nextPaymentDate.setMonth(nextPaymentDate.getMonth() + 1);
       nextPaymentDate.setDate(loan.dueDay);
-      
-      const { error } = await supabase
+  
+      const { error: updateError } = await supabase
         .from('loans')
         .update({
           remaining_amount: newRemainingAmount,
           next_payment_date: nextPaymentDate.toISOString()
         })
         .eq('id', loanId);
-      
-      if (error) throw error;
-      
-      setLoans(prevLoans => 
-        prevLoans.map(loan => 
-          loan.id === loanId
+  
+      if (updateError) throw updateError;
+  
+      setLoans(prevLoans =>
+        prevLoans.map(l =>
+          l.id === loanId
             ? {
-                ...loan,
+                ...l,
                 remainingAmount: newRemainingAmount,
                 nextPaymentDate
               }
-            : loan
+            : l
         )
       );
-      
+  
       toast.success(`Payment of ₹${paymentAmount} made successfully!`);
+  
+      // 2. Log the expense in the 'expenses' table
+      await ensureProfileExists();
+      const { data: userData } = await supabase.auth.getUser();
+      if (!userData?.user) throw new Error('User not authenticated');
+      const user_id = userData.user.id;
+  
+      const { error: expenseError } = await supabase
+        .from('expenses')
+        .insert({
+          amount: paymentAmount,
+          date: new Date().toISOString(), // Use current date for the expense
+          description: `Loan payment for "${loanDescription}"`,
+          category: 'Loans',
+          user_id: user_id,
+        });
+  
+      if (expenseError) throw expenseError;
+      toast.success('Expense logged successfully!');
+  
     } catch (error: any) {
-      console.error('Error updating loan payment:', error);
-      toast.error(error.message || 'Failed to update loan payment');
+      console.error('Error updating loan payment and logging expense:', error);
+      toast.error(error.message || 'Failed to update loan payment and log expense');
     } finally {
       setIsLoading(false);
     }
